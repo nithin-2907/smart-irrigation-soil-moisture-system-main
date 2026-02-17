@@ -1,15 +1,29 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function Chatbot() {
-
+  // 1. Declare state variables FIRST
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hi 👋 I’m Smart Farm Assistant. Ask me about crops, weather, soil, or predictions!" }
   ]);
-
   const [sessionId] = useState(`session-${Date.now()}`);
   const [loading, setLoading] = useState(false);
+
+  // 2. Declare refs
+  const messagesEndRef = useRef(null);
+
+  // 3. Define helper functions
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // 4. Use effects (which depend on state/refs)
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, loading]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -54,7 +68,6 @@ export default function Chatbot() {
       {/* Chat Window */}
       {open && (
         <div className="chatbot-container">
-
           <div className="chatbot-header">
             🤖 Smart Assistant
           </div>
@@ -62,20 +75,34 @@ export default function Chatbot() {
           <div className="chatbot-messages">
             {messages.map((msg, index) => (
               <div key={index} className={`chat ${msg.sender}`}>
-                {msg.text}
+                {msg.sender === "bot" ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+                ) : (
+                  msg.text
+                )}
               </div>
             ))}
+            {loading && (
+              <div className="chat bot">
+                <div className="typing-indicator">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
 
           <div className="chatbot-input">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
               placeholder="Ask something..."
             />
-            <button onClick={sendMessage}>Send</button>
+            <button onClick={sendMessage} disabled={loading || !input.trim()}>
+              Send
+            </button>
           </div>
-
         </div>
       )}
     </>
