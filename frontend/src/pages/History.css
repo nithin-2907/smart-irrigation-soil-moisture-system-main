@@ -1,0 +1,46 @@
+.history-container {
+  padding: 20px;
+}
+
+.history-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.history-table th {
+  background: #1e293b;
+  color: white;
+  padding: 12px;
+  text-align: left;
+}
+
+.history-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.history-table tr:hover {
+  background: #f9fafb;
+}
+
+.input-box {
+  background: #f1f5f9;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.result {
+  font-weight: bold;
+  color: #16a34a;
+}

@@ -1,0 +1,39 @@
+.market-container {
+  max-width: 900px;
+}
+
+.market-container h1 {
+  margin-bottom: 20px;
+}
+
+.market-table {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.market-header,
+.market-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 12px 0;
+}
+
+.market-header {
+  font-weight: bold;
+  border-bottom: 2px solid #eee;
+}
+
+.market-row {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.market-row:last-child {
+  border-bottom: none;
+}
+
+.price {
+  font-weight: bold;
+  color: #22c55e;
+}
