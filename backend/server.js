@@ -25,6 +25,8 @@ app.use("/api/ml", mlRoutes);
 app.use("/api/yield", yieldRoutes);
 app.use("/api/translator", translatorRoutes);
 app.use("/api/chat", chatRoutes);
+const marketRoutes = require("./routes/marketRoutes");
+app.use("/api/market", marketRoutes);
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart_irrigation';
 mongoose
