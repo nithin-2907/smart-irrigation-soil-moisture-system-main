@@ -4,6 +4,8 @@ const WeatherSchema = new mongoose.Schema({
   temperature: Number,
   humidity: Number,
   rainfall: Number,
+  windSpeed: Number,
+  pressure: Number,
   soilMoisture: Number,
   city: String,
 }, { timestamps: true }); // ⭐ DO NOT REMOVE

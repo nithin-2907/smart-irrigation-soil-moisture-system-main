@@ -2,35 +2,52 @@ import { useState } from "react";
 import api from "../services/api";
 
 export default function Weather() {
-
   const [city, setCity] = useState("");
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const computeIrrigation = (w) => {
-    // simple rules — tweak as needed:
-    if (!w) return "Unknown";
-    if ((w.rainfall || 0) > 0) return "Not Required 💧 (recent rain)";
-    if (w.soilMoisture !== undefined && w.soilMoisture >= 40) return "Not Required 💧";
-    if ((w.temperature || 0) >= 35 && (w.humidity || 0) <= 40) return "Irrigation Required 🚿";
-    return "Optional — monitor soil moisture";
+  // Helper: Get Recommendation based on Rain & Soil
+  const getIrrigationRecommendation = (predictedRain, soilMoisture) => {
+    // 1. If heavy rain is coming, don't irrigate regardless of soil
+    if (predictedRain > 10) {
+      return {
+        status: "Wait for Rain 🌧️",
+        color: "#eab308", // Yellow/Orange (Caution)
+        reason: `Heavy rain (${predictedRain}mm) expected. Save water.`
+      };
+    }
+
+    // 2. If soil is wet, don't irrigate
+    if (soilMoisture > 60) {
+      return {
+        status: "No Irrigation Needed 💧",
+        color: "#22c55e", // Green
+        reason: "Soil moisture is sufficient."
+      };
+    }
+
+    // 3. If soil is moderate
+    if (soilMoisture >= 30 && soilMoisture <= 60) {
+      return {
+        status: "Monitor Soil 👁️",
+        color: "#3b82f6", // Blue
+        reason: "Moisture levels are okay for now."
+      };
+    }
+
+    // 4. If soil is dry AND little/no rain expected
+    return {
+      status: "Irrigation Required 🚿",
+      color: "#ef4444", // Red
+      reason: "Soil is dry and no significant rain expected."
+    };
   };
 
-  const useMockWeather = () => {
-    const mock = {
-      temperature: 29.6,
-      humidity: 62,
-      rainfall: 0,
-      soilMoisture: 55,
-      irrigation: "Not Required 💧",
-      // demo prediction fields for the mock
-      predictedRainfall: 8.5,
-      irrigationSuggestion: { required: false, reason: 'Light rain expected' },
-      predictionSource: 'demo-model',
-      weatherProvider: 'OpenWeather'
-    };
-    setWeather(mock);
+  const getSoilStatus = (moisture) => {
+    if (moisture > 60) return { label: "Wet / Sufficient", color: "#22c55e" };
+    if (moisture >= 30) return { label: "Moderate", color: "#eab308" };
+    return { label: "Dry", color: "#ef4444" };
   };
 
   const handleFetch = async (e) => {
@@ -40,55 +57,43 @@ export default function Weather() {
 
     try {
       const params = { city: city || 'Coimbatore' };
+
+      // 1. Collect Weather Data
       const res = await api.get('/weather/collect', { params });
       const w = res.data.weather;
 
-      const uiWeather = {
-        temperature: Number(w.temperature?.toFixed ? w.temperature : w.temperature),
-        humidity: Math.round(w.humidity),
-        rainfall: w.rainfall || 0,
-        soilMoisture: w.soilMoisture,
-        irrigation: computeIrrigation(w),
-        weatherProvider: res.data.provider || 'OpenWeather'
-      };
-
-      setWeather(uiWeather);
-
-      // fetch ML prediction (predicted rainfall + irrigation suggestion)
+      // 2. Get Prediction
+      let predictedRain = 0;
       try {
         const predRes = await api.get('/weather/predict', { params });
         const p = predRes.data || {};
-        const predicted = typeof p.predictedRainfall_mm === 'number'
-          ? Math.round(p.predictedRainfall_mm * 100) / 100
-          : p.predictedRainfall_mm;
-
-        setWeather(prev => ({
-          ...prev,
-          predictedRainfall: predicted,
-          irrigationSuggestion: p.irrigation,
-          predictionSource: p.predictionSource || 'Local ML (rainfall_model.pkl)',
-          modelMetrics: p.modelMetrics || null
-        }));
-      } catch (predErr) {
-        // prediction not available (model not trained or error) — surface minimal feedback
-        console.warn('Prediction error', predErr?.response?.data || predErr?.message);
-        setWeather(prev => ({ ...prev, predictedRainfall: null, irrigationSuggestion: null, predictionSource: null }));
-        const msg = predErr?.response?.data?.error || predErr?.message || '';
-        if (msg.toLowerCase().includes('model') || msg.toLowerCase().includes('not available')) {
-          setError('Rainfall model not trained — run POST /api/ml/train-rainfall to enable ML predictions.');
-        }
+        predictedRain = typeof p.predictedRainfall_mm === 'number'
+          ? Math.round(p.predictedRainfall_mm * 10) / 10
+          : 0;
+      } catch (err) {
+        console.warn("Prediction not available, defaulting to 0");
       }
+
+      // 3. Construct UI Object
+      const soilMoisture = w.soilMoisture;
+      const irrigation = getIrrigationRecommendation(predictedRain, soilMoisture);
+      const soilStatus = getSoilStatus(soilMoisture);
+
+      setWeather({
+        temperature: Math.round(w.temperature),
+        humidity: Math.round(w.humidity),
+        rainfall: w.rainfall || 0,
+        windSpeed: w.windSpeed || 0, // NEW
+        pressure: w.pressure || 0,   // NEW
+        predictedRain: predictedRain,
+        soilMoisture: soilMoisture,
+        soilStatus: soilStatus,
+        irrigation: irrigation
+      });
 
     } catch (err) {
       console.error(err);
-      // helpful error when OPENWEATHER_API_KEY is missing or unauthorized
-      const status = err?.response?.status || 0;
-      if (status === 401 || (err?.response?.data?.error && err.response.data.error.includes('401'))) {
-        setError('OpenWeather API key is missing or invalid. Add OPENWEATHER_API_KEY to backend/.env');
-      } else {
-        setError('Could not fetch weather from backend. Using mock data instead.');
-        useMockWeather();
-      }
+      setError("Could not fetch weather data. Please check your connection or API key.");
     } finally {
       setLoading(false);
     }
@@ -96,98 +101,99 @@ export default function Weather() {
 
   return (
     <div className="page-container">
+      <h1 className="page-title">🌦️ Weather & Irrigation Dashboard</h1>
 
-      <h1 className="page-title">🌦️ Weather & Irrigation</h1>
-
-      {/* SEARCH FORM */}
-      <div className="form-card" style={{ maxWidth: "500px", marginBottom: "30px" }}>
-
-        <form onSubmit={handleFetch}>
-
-          <div className="form-group">
-            <label>Enter City</label>
-            <input
-              type="text"
-              placeholder="e.g Coimbatore (leave empty for default)"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-            />
-          </div>
-
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Getting…' : 'Get Weather'}
+      {/* SECTION 1: INPUT */}
+      <div className="form-card" style={{ maxWidth: "600px", marginBottom: "30px" }}>
+        <form onSubmit={handleFetch} style={{ display: 'flex', gap: '10px' }}>
+          <input
+            type="text"
+            placeholder="Enter City (e.g. Coimbatore)"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            style={{ flex: 1 }}
+          />
+          <button type="submit" className="primary-btn" disabled={loading}>
+            {loading ? 'Loading...' : 'Get Weather'}
           </button>
-
-          <button type="button" className="btn" onClick={useMockWeather} style={{ marginLeft: 12 }}>
-            Use sample data
-          </button>
-
-          {error && <p className="msg error" style={{ marginTop: 12 }}>{error}</p>}
-
         </form>
-
+        {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
       </div>
 
-      {/* WEATHER CARDS */}
       {weather && (
-        <div className="dashboard-grid">
+        <>
+          {/* SECTION 2: WEATHER METRICS */}
+          <div className="card-grid" style={{ marginBottom: '30px' }}>
 
-          <div className="dashboard-card card-temp">
-            <div className="card-title">🌡 Temperature</div>
-            <div className="card-value">{weather.temperature} °C</div>
-          </div>
-
-          <div className="dashboard-card card-humidity">
-            <div className="card-title">💧 Humidity</div>
-            <div className="card-value">{weather.humidity} %</div>
-          </div>
-
-          <div className="dashboard-card card-rain">
-            <div className="card-title">🌧 Observed Rainfall</div>
-            <div className="card-value">{weather.rainfall} mm</div>
-            <div className="card-sub">Provider: {weather.weatherProvider || 'OpenWeather'}</div>
-          </div>
-
-          <div className="dashboard-card card-soil">
-            <div className="card-title">🚿 Irrigation Status</div>
-            <div className="card-value">{weather.irrigation}</div>
-          </div>
-
-          <div className="dashboard-card card-pred-rain">
-            <div className="card-title">🔮 Predicted Rainfall</div>
-            <div className="card-value">
-              {weather.predictedRainfall !== undefined && weather.predictedRainfall !== null
-                ? `${weather.predictedRainfall} mm`
-                : '—'}
+            {/* Temperature */}
+            <div className="dashboard-card" style={{ borderLeft: '5px solid #ff4d4d' }}>
+              <div className="card-title">🌡️ Temperature</div>
+              <div className="card-value">{weather.temperature}°C</div>
             </div>
-            <div className="card-sub">Source: {weather.predictionSource || 'Local ML model'}</div>
-            {weather.modelMetrics && (
-              <div className="card-sub">
-                Model RMSE: {Math.round(weather.modelMetrics.rmse * 100) / 100} mm · R²: {Math.round((weather.modelMetrics.r2 ?? 0) * 100) / 100}
+
+            {/* Humidity */}
+            <div className="dashboard-card" style={{ borderLeft: '5px solid #3b82f6' }}>
+              <div className="card-title">💧 Humidity</div>
+              <div className="card-value">{weather.humidity}%</div>
+            </div>
+
+            {/* Wind Speed (NEW) */}
+            <div className="dashboard-card" style={{ borderLeft: '5px solid #0ea5e9' }}>
+              <div className="card-title">🍃 Wind Speed</div>
+              <div className="card-value">{weather.windSpeed} m/s</div>
+            </div>
+
+            {/* Pressure (NEW) */}
+            <div className="dashboard-card" style={{ borderLeft: '5px solid #64748b' }}>
+              <div className="card-title">⏲️ Pressure</div>
+              <div className="card-value">{weather.pressure} hPa</div>
+            </div>
+
+            {/* Rainfall Today */}
+            <div className="dashboard-card" style={{ borderLeft: '5px solid #8b5cf6' }}>
+              <div className="card-title">🌧️ Rainfall Today</div>
+              <div className="card-value">{weather.rainfall} mm</div>
+            </div>
+
+            {/* Predicted Rainfall */}
+            <div className="dashboard-card" style={{ borderLeft: '5px solid #a855f7' }}>
+              <div className="card-title">🔮 Predicted Rainfall</div>
+              <div className="card-value">{weather.predictedRain} mm</div>
+              <div style={{ fontSize: '12px', color: '#666' }}>Expected tomorrow</div>
+            </div>
+
+          </div>
+
+          {/* SECTION 3: SOIL & IRRIGATION HIGHLIGHTS */}
+          <div className="card-grid">
+
+            {/* Soil Moisture */}
+            <div className="dashboard-card" style={{ borderLeft: `5px solid ${weather.soilStatus?.color || '#ccc'}` }}>
+              <div className="card-title">🌱 Soil Moisture Level</div>
+              <div className="card-value">{weather.soilMoisture}%</div>
+              <div style={{
+                marginTop: '5px',
+                fontWeight: '600',
+                color: weather.soilStatus?.color || '#ccc'
+              }}>
+                {weather.soilStatus?.label || 'Unknown'}
               </div>
-            )}
-          </div>
-
-          <div className="dashboard-card card-irrigation-pred">
-            <div className="card-title">💡 ML Irrigation Suggestion</div>
-            <div className="card-value">
-              {weather.irrigationSuggestion
-                ? (weather.irrigationSuggestion.required ? 'Irrigation Recommended' : 'No irrigation required')
-                : '—'}
             </div>
-            <div className="card-sub">
-              {weather.irrigationSuggestion ? `${weather.irrigationSuggestion.reason}${weather.irrigationSuggestion.suggested_mm ? ` · ${weather.irrigationSuggestion.suggested_mm} mm suggested` : ''}` : ''}
+
+            {/* Irrigation Recommendation */}
+            <div className="dashboard-card" style={{ borderLeft: `5px solid ${weather.irrigation?.color || '#ccc'}`, backgroundColor: '#fdfdfd' }}>
+              <div className="card-title">🚿 Irrigation Recommendation</div>
+              <div className="card-value" style={{ color: weather.irrigation?.color || '#ccc' }}>
+                {weather.irrigation?.status || 'Unknown'}
+              </div>
+              <div style={{ fontSize: '13px', color: '#666', marginTop: '5px' }}>
+                {weather.irrigation?.reason || 'Based on available data'}
+              </div>
             </div>
-            <div className="card-sub">Provider: ML model</div>
-          </div>
 
-          <div style={{ gridColumn: '1 / -1', fontSize: 12, color: '#666', marginTop: 12 }}>
-            Data provider: {weather.weatherProvider || 'OpenWeather API'} · Prediction source: {weather.predictionSource || 'Local ML model'}
           </div>
-
-        </div>
+        </>
       )}
-
     </div>
   );
 }

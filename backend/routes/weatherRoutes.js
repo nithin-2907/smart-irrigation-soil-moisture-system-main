@@ -3,7 +3,7 @@ const axios = require("axios");
 const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const pythonExec = (function() {
+const pythonExec = (function () {
   const venvPython = path.join(__dirname, '..', '..', '.venv', 'Scripts', 'python.exe');
   return fs.existsSync(venvPython) ? venvPython : 'python';
 })();
@@ -30,21 +30,42 @@ router.get("/collect", async (req, res) => {
     const response = await axios.get(url);
     const data = response.data;
 
-    const weather = await WeatherData.create({
-      temperature: data.main.temp,
-      humidity: data.main.humidity,
-      rainfall: data.rain ? data.rain["1h"] || 0 : 0,
-      city: city,
+    const temp = data.main.temp;
+    const hum = data.main.humidity;
+    const press = data.main.pressure;
+    const rain = data.rain ? data.rain["1h"] || 0 : 0;
+    const wind = data.wind ? data.wind.speed : 0;
 
-      // ⭐ Fake Soil Moisture (VERY GOOD FOR DEMO)
-      soilMoisture: Math.floor(Math.random() * 40) + 40,
+    // Calculate Soil Moisture (0-100%)
+    // Formula: (humidity * 0.5) + (rainfall * 0.3) - (temperature * 0.1) - (wind_speed * 0.1)
+    let calculatedMoisture = (hum * 0.5) + (rain * 0.3) - (temp * 0.1) - (wind * 0.1);
+
+    // Normalize and clamp between 0 and 100
+    // The formula can result in low values, so we might need a base offset or scaling. 
+    // For now, using a base of 20 to ensure reasonable values, then clamping.
+    // Actually, following user formula strictly, but adding clamping.
+    // NOTE: The formula yields approx: (50*0.5) + 0 - (30*0.1) - (5*0.1) = 25 - 3 - 0.5 = 21.5%
+    // This seems low for "Moderate". 
+    // User said "Normalize value between 0–100%". 
+    // I will stick to their formula but ensure it doesn't go below 0 or above 100.
+    // Maybe add a slight boost if it's consistently too low during testing.
+
+    calculatedMoisture = Math.max(0, Math.min(100, calculatedMoisture));
+
+    const weather = await WeatherData.create({
+      temperature: temp,
+      humidity: hum,
+      rainfall: rain,
+      windSpeed: wind,
+      pressure: press,
+      city: city,
+      soilMoisture: parseFloat(calculatedMoisture.toFixed(1)),
     });
 
-    // include provider metadata so UI shows the true data source
     res.json({
       message: "Weather data collected successfully",
       weather,
-      provider: "OpenWeather"
+      provider: "OpenWeather" // Keeping for internal use, usually hidden from UI
     });
 
   } catch (error) {
