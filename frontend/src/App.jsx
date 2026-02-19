@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import CropRecommendation from "./pages/CropRecommendation";
 import Dashboard from "./pages/Dashboard";
 import History from "./pages/History";
+import LeafDisease from "./pages/LeafDisease";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import SoilHealth from "./pages/SoilHealth";
@@ -71,6 +72,12 @@ function App() {
             <Route path="/translator" element={
               <ProtectedRoute>
                 <Translator />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/disease" element={
+              <ProtectedRoute>
+                <LeafDisease />
               </ProtectedRoute>
             } />
 

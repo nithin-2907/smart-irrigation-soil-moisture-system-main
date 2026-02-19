@@ -1,3 +1,4 @@
+import { FaChartLine, FaLeaf } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
 import "./Sidebar.css";
 
@@ -13,8 +14,8 @@ function Sidebar() {
       {/* Menu Links */}
       <div className="sidebar-menu">
 
-        <NavLink 
-          to="/" 
+        <NavLink
+          to="/"
           className={({ isActive }) =>
             isActive ? "sidebar-item active" : "sidebar-item"
           }
@@ -22,8 +23,8 @@ function Sidebar() {
           Dashboard
         </NavLink>
 
-        <NavLink 
-          to="/login" 
+        <NavLink
+          to="/login"
           className={({ isActive }) =>
             isActive ? "sidebar-item active" : "sidebar-item"
           }
@@ -31,8 +32,8 @@ function Sidebar() {
           Login
         </NavLink>
 
-        <NavLink 
-          to="/crop" 
+        <NavLink
+          to="/crop"
           className={({ isActive }) =>
             isActive ? "sidebar-item active" : "sidebar-item"
           }
@@ -40,8 +41,8 @@ function Sidebar() {
           Crop Recommendation
         </NavLink>
 
-        <NavLink 
-          to="/weather" 
+        <NavLink
+          to="/weather"
           className={({ isActive }) =>
             isActive ? "sidebar-item active" : "sidebar-item"
           }
@@ -49,8 +50,8 @@ function Sidebar() {
           Weather & Irrigation
         </NavLink>
 
-        <NavLink 
-          to="/soil" 
+        <NavLink
+          to="/soil"
           className={({ isActive }) =>
             isActive ? "sidebar-item active" : "sidebar-item"
           }
@@ -58,17 +59,26 @@ function Sidebar() {
           Soil Health
         </NavLink>
 
-        <NavLink 
-          to="/yield" 
+        <NavLink
+          to="/yield"
           className={({ isActive }) =>
             isActive ? "sidebar-item active" : "sidebar-item"
           }
         >
-          Yield Prediction
+          <FaChartLine style={{ marginRight: '8px' }} /> Yield Prediction
         </NavLink>
 
-        <NavLink 
-          to="/market" 
+        <NavLink
+          to="/disease"
+          className={({ isActive }) =>
+            isActive ? "sidebar-item active" : "sidebar-item"
+          }
+        >
+          <FaLeaf style={{ marginRight: '8px' }} /> Leaf Diagnosis
+        </NavLink>
+
+        <NavLink
+          to="/market"
           className={({ isActive }) =>
             isActive ? "sidebar-item active" : "sidebar-item"
           }
@@ -76,8 +86,8 @@ function Sidebar() {
           Market Prices
         </NavLink>
 
-        <NavLink 
-          to="/translator" 
+        <NavLink
+          to="/translator"
           className={({ isActive }) =>
             isActive ? "sidebar-item active" : "sidebar-item"
           }
@@ -85,8 +95,8 @@ function Sidebar() {
           Translator
         </NavLink>
 
-        <NavLink 
-          to="/history" 
+        <NavLink
+          to="/history"
           className={({ isActive }) =>
             isActive ? "sidebar-item active" : "sidebar-item"
           }

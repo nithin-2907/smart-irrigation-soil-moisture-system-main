@@ -31,6 +31,9 @@ app.use("/api/market", marketRoutes);
 const dashboardRoutes = require("./routes/dashboardRoutes");
 app.use("/api/dashboard", dashboardRoutes);
 
+const diseaseRoutes = require("./routes/diseaseRoutes");
+app.use("/api/disease", diseaseRoutes);
+
 const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart_irrigation';
 mongoose
   .connect(mongoUri)
