@@ -40,6 +40,81 @@ router.get("/debug-ml", async (req, res) => {
   }
 });
 
+// Soil Location — fetches real soil moisture from Open-Meteo + derives NPK/pH estimates
+router.get("/soil-location", async (req, res) => {
+  const { lat, lon } = req.query;
+  if (!lat || !lon) return res.status(400).json({ error: "lat and lon are required" });
+
+  try {
+    const axios = require("axios");
+
+    // 1. Open-Meteo — real soil moisture & soil temperature (free, global coverage)
+    const meteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=soil_moisture_0_to_1cm,soil_moisture_1_to_3cm,soil_temperature_0cm&hourly=soil_moisture_0_to_7cm&forecast_days=1`;
+    const meteoRes = await axios.get(meteoUrl, { timeout: 10000 });
+    const current = meteoRes.data?.current || {};
+
+    const soilMoisture = current.soil_moisture_0_to_1cm ?? null; // m³/m³
+    const soilTemp = current.soil_temperature_0cm ?? null; // °C
+
+    // 2. Derive soil properties from climate zone (latitude-based)
+    //    and soil moisture. These are reasonable scientific estimates.
+    const latNum = parseFloat(lat);
+    const lonNum = parseFloat(lon);
+
+    // Determine rough climate zone from lat
+    let ph, nitrogen, phosphorus, potassium, soilType;
+
+    if (Math.abs(latNum) < 10) {
+      // Equatorial/Tropical — highly leached, acidic
+      ph = 5.5; nitrogen = 48; phosphorus = 18; potassium = 120; soilType = "Clay";
+    } else if (Math.abs(latNum) < 23) {
+      // Sub-tropical / Tropical India
+      ph = 6.5; nitrogen = 55; phosphorus = 22; potassium = 145; soilType = "Loamy";
+    } else if (Math.abs(latNum) < 35) {
+      // Warm temperate — North India, China, SE US
+      ph = 7.0; nitrogen = 70; phosphorus = 35; potassium = 180; soilType = "Sandy";
+    } else if (Math.abs(latNum) < 50) {
+      // Temperate — Europe, Northern US
+      ph = 6.8; nitrogen = 80; phosphorus = 42; potassium = 160; soilType = "Loamy";
+    } else {
+      // Boreal / Sub-arctic
+      ph = 5.8; nitrogen = 40; phosphorus = 15; potassium = 90; soilType = "Sandy";
+    }
+
+    // Adjust N based on actual soil moisture (wet soils → higher N availability)
+    if (soilMoisture !== null) {
+      const moisturePct = soilMoisture * 100; // convert m³/m³ to %
+      nitrogen = Math.round(nitrogen * (0.7 + (moisturePct / 50)));
+    }
+
+    // Adjust pH based on rainfall zone (arid/semi-arid → more alkaline)
+    // East of 75°E in India → peninsular, slightly more acidic
+    if (lonNum > 75 && lonNum < 90 && latNum > 8 && latNum < 25) {
+      ph = parseFloat((ph - 0.3).toFixed(1)); // South India tends more acidic
+    }
+
+    const soilMoisturePercent = soilMoisture !== null
+      ? parseFloat((soilMoisture * 100).toFixed(1))
+      : null;
+
+    res.json({
+      ph: ph,
+      nitrogen: Math.min(120, Math.max(20, nitrogen)),
+      phosphorus: phosphorus,
+      potassium: potassium,
+      soilMoisture: soilMoisturePercent,  // real from Open-Meteo (%)
+      soilTemperature: soilTemp,             // real from Open-Meteo (°C)
+      soilType: soilType,
+      lat: parseFloat(lat),
+      lon: parseFloat(lon),
+      source: "Open-Meteo (soil moisture/temp) + regional soil model (NPK/pH)",
+    });
+  } catch (err) {
+    console.error("Soil location error:", err.message);
+    res.status(500).json({ error: `Soil data fetch failed: ${err.message}` });
+  }
+});
+
 // Seed Route — crops with tightly bounded, distinct parameter ranges
 router.get("/seed-data", async (req, res) => {
   try {
