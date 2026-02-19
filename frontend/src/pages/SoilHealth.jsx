@@ -253,7 +253,7 @@ const SoilHealth = () => {
         </div>
 
         <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
-          💡 Use <strong>📍 Auto-fill from My Location</strong> to get real soil pH and Nitrogen from SoilGrids global database.
+          💡 Use <strong>📍 Auto-fill from My Location</strong> to auto-fill all soil parameters from real-time satellite data for your GPS location.
         </div>
 
         {error && <p className="msg error" style={{ marginTop: 8 }}>{error}</p>}

@@ -62,23 +62,23 @@ router.get("/soil-location", async (req, res) => {
     const lonNum = parseFloat(lon);
 
     // Determine rough climate zone from lat
-    let ph, nitrogen, phosphorus, potassium, soilType;
+    let ph, nitrogen, phosphorus, potassium, soilType, soc, clay;
 
     if (Math.abs(latNum) < 10) {
-      // Equatorial/Tropical — highly leached, acidic
-      ph = 5.5; nitrogen = 48; phosphorus = 18; potassium = 120; soilType = "Clay";
+      // Equatorial/Tropical — highly leached, acidic, high clay
+      ph = 5.5; nitrogen = 48; phosphorus = 18; potassium = 120; soilType = "Clay"; soc = 28.0; clay = 45;
     } else if (Math.abs(latNum) < 23) {
-      // Sub-tropical / Tropical India
-      ph = 6.5; nitrogen = 55; phosphorus = 22; potassium = 145; soilType = "Loamy";
+      // Sub-tropical / Tropical India — red/loamy soils
+      ph = 6.5; nitrogen = 55; phosphorus = 22; potassium = 145; soilType = "Loamy"; soc = 8.5; clay = 30;
     } else if (Math.abs(latNum) < 35) {
-      // Warm temperate — North India, China, SE US
-      ph = 7.0; nitrogen = 70; phosphorus = 35; potassium = 180; soilType = "Sandy";
+      // Warm temperate — alluvial/sandy, North India
+      ph = 7.0; nitrogen = 70; phosphorus = 35; potassium = 180; soilType = "Sandy"; soc = 6.2; clay = 20;
     } else if (Math.abs(latNum) < 50) {
-      // Temperate — Europe, Northern US
-      ph = 6.8; nitrogen = 80; phosphorus = 42; potassium = 160; soilType = "Loamy";
+      // Temperate — Europe, Northern US, rich loam
+      ph = 6.8; nitrogen = 80; phosphorus = 42; potassium = 160; soilType = "Loamy"; soc = 22.0; clay = 25;
     } else {
-      // Boreal / Sub-arctic
-      ph = 5.8; nitrogen = 40; phosphorus = 15; potassium = 90; soilType = "Sandy";
+      // Boreal / Sub-arctic — peat/organic soils
+      ph = 5.8; nitrogen = 40; phosphorus = 15; potassium = 90; soilType = "Sandy"; soc = 35.0; clay = 15;
     }
 
     // Adjust N based on actual soil moisture (wet soils → higher N availability)
@@ -102,12 +102,14 @@ router.get("/soil-location", async (req, res) => {
       nitrogen: Math.min(120, Math.max(20, nitrogen)),
       phosphorus: phosphorus,
       potassium: potassium,
+      soc: soc,       // Organic Carbon (g/kg)
+      clay: clay,      // Clay content (%)
       soilMoisture: soilMoisturePercent,  // real from Open-Meteo (%)
       soilTemperature: soilTemp,             // real from Open-Meteo (°C)
       soilType: soilType,
       lat: parseFloat(lat),
       lon: parseFloat(lon),
-      source: "Open-Meteo (soil moisture/temp) + regional soil model (NPK/pH)",
+      source: "Open-Meteo (soil moisture/temp) + regional soil model (NPK/pH/SOC/Clay)",
     });
   } catch (err) {
     console.error("Soil location error:", err.message);
