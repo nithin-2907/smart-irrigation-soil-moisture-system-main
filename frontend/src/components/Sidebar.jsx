@@ -1,4 +1,16 @@
-import { FaChartLine, FaLeaf } from "react-icons/fa";
+import {
+  FaChartLine,
+  FaCloudSun,
+  FaFlask,
+  FaHistory,
+  FaHome,
+  FaLanguage,
+  FaLeaf,
+  FaSeedling,
+  FaSignInAlt,
+  FaStore,
+  FaUserCircle
+} from "react-icons/fa";
 import { NavLink } from "react-router-dom";
 import "./Sidebar.css";
 
@@ -20,7 +32,7 @@ function Sidebar() {
             isActive ? "sidebar-item active" : "sidebar-item"
           }
         >
-          Dashboard
+          <FaHome style={{ marginRight: '8px' }} /> Dashboard
         </NavLink>
 
         <NavLink
@@ -29,7 +41,7 @@ function Sidebar() {
             isActive ? "sidebar-item active" : "sidebar-item"
           }
         >
-          Login
+          <FaSignInAlt style={{ marginRight: '8px' }} /> Login
         </NavLink>
 
         <NavLink
@@ -38,7 +50,7 @@ function Sidebar() {
             isActive ? "sidebar-item active" : "sidebar-item"
           }
         >
-          Crop Recommendation
+          <FaSeedling style={{ marginRight: '8px' }} /> Crop Recommendation
         </NavLink>
 
         <NavLink
@@ -47,7 +59,7 @@ function Sidebar() {
             isActive ? "sidebar-item active" : "sidebar-item"
           }
         >
-          Weather & Irrigation
+          <FaCloudSun style={{ marginRight: '8px' }} /> Weather & Irrigation
         </NavLink>
 
         <NavLink
@@ -56,7 +68,7 @@ function Sidebar() {
             isActive ? "sidebar-item active" : "sidebar-item"
           }
         >
-          Soil Health
+          <FaFlask style={{ marginRight: '8px' }} /> Soil Health
         </NavLink>
 
         <NavLink
@@ -83,7 +95,7 @@ function Sidebar() {
             isActive ? "sidebar-item active" : "sidebar-item"
           }
         >
-          Market Prices
+          <FaStore style={{ marginRight: '8px' }} /> Market Prices
         </NavLink>
 
         <NavLink
@@ -92,7 +104,7 @@ function Sidebar() {
             isActive ? "sidebar-item active" : "sidebar-item"
           }
         >
-          Translator
+          <FaLanguage style={{ marginRight: '8px' }} /> Translator
         </NavLink>
 
         <NavLink
@@ -101,7 +113,16 @@ function Sidebar() {
             isActive ? "sidebar-item active" : "sidebar-item"
           }
         >
-          History
+          <FaHistory style={{ marginRight: '8px' }} /> History
+        </NavLink>
+
+        <NavLink
+          to="/profile"
+          className={({ isActive }) =>
+            isActive ? "sidebar-item active" : "sidebar-item"
+          }
+        >
+          <FaUserCircle style={{ marginRight: '8px' }} /> Profile & Logout
         </NavLink>
 
       </div>
