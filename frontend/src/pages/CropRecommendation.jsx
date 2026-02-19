@@ -141,13 +141,14 @@ export default function CropRecommendation() {
             onChange={handleChange}
           />
 
-          <input
-            type="text"
-            name="region"
-            placeholder="Region/Zone (optional)"
-            value={form.region}
-            onChange={handleChange}
-          />
+          <select name="region" value={form.region} onChange={handleChange}>
+            <option value="">Region (optional)</option>
+            <option>North</option>
+            <option>South</option>
+            <option>East</option>
+            <option>West</option>
+            <option>Central</option>
+          </select>
 
           <select name="season" value={form.season} onChange={handleChange}>
             <option value="">Season (optional)</option>
@@ -165,13 +166,13 @@ export default function CropRecommendation() {
               <>
                 <button type="button" className="btn" disabled={trainLoading} onClick={async () => {
                   setTrainLoading(true);
-                  try { await api.post('/ml/train'); alert('Training finished'); } catch(e) { alert('Training failed'); }
+                  try { await api.post('/ml/train'); alert('Training finished'); } catch (e) { alert('Training failed'); }
                   setTrainLoading(false);
                 }}>{trainLoading ? 'Training…' : 'Train model'}</button>
 
                 <button type="button" className="btn" disabled={seedLoading} onClick={async () => {
                   setSeedLoading(true);
-                  try { await api.post('/ml/seed-crop'); alert('Seeded crop_samples'); } catch(e) { alert('Seeding failed'); }
+                  try { await api.post('/ml/seed-crop'); alert('Seeded crop_samples'); } catch (e) { alert('Seeding failed'); }
                   setSeedLoading(false);
                 }}>{seedLoading ? 'Seeding…' : 'Seed crop dataset'}</button>
               </>

@@ -4,7 +4,7 @@ const { exec } = require("child_process");
 const path = require("path");
 const mongoose = require("mongoose");
 const fs = require('fs');
-const pythonExec = (function() {
+const pythonExec = (function () {
   // prefer project virtualenv if present, otherwise fall back to system `python`
   const venvPython = path.join(__dirname, '..', '..', '.venv', 'Scripts', 'python.exe');
   return fs.existsSync(venvPython) ? venvPython : 'python';
@@ -18,6 +18,160 @@ const SoilPrediction = require("../models/SoilPrediction");
 
 // DEBUG helper - echo request body (temporary)
 router.post('/echo', (req, res) => { res.json({ body: req.body }); });
+
+// Debug Route to check DB and Model
+router.get("/debug-ml", async (req, res) => {
+  try {
+    const count = await mongoose.connection.db.collection('crop_samples').countDocuments();
+
+    const modelPath = path.join(__dirname, "../../ml/model.pkl");
+    const modelExists = fs.existsSync(modelPath);
+    const modelStats = modelExists ? fs.statSync(modelPath) : null;
+
+    res.json({
+      db_connection: mongoose.connection.readyState,
+      crop_samples_count: count,
+      model_exists: modelExists,
+      model_size: modelStats ? modelStats.size : 0,
+      model_mtime: modelStats ? modelStats.mtime : null
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Seed Route — crops with tightly bounded, distinct parameter ranges
+router.get("/seed-data", async (req, res) => {
+  try {
+    const rnd = (lo, hi) => parseFloat((lo + Math.random() * (hi - lo)).toFixed(2));
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+    // crop definitions: [temp, hum, rain, ph, moist, N, P, K, soils, seasons, regions]
+    const cropDefs = [
+      { crop: "Rice", temp: [22, 32], hum: [75, 95], rain: [160, 280], ph: [5.5, 7.0], moist: [50, 80], N: [60, 120], P: [25, 55], K: [25, 55], soils: ["Clay", "Loamy"], seasons: ["Kharif"], regions: ["South", "East", "West"], n: 200 },
+      { crop: "Wheat", temp: [8, 18], hum: [40, 65], rain: [50, 100], ph: [6.0, 7.5], moist: [30, 55], N: [80, 120], P: [30, 70], K: [35, 65], soils: ["Loamy", "Sandy"], seasons: ["Rabi"], regions: ["North", "Central"], n: 200 },
+      { crop: "Corn", temp: [20, 30], hum: [55, 75], rain: [80, 160], ph: [5.5, 7.0], moist: [40, 65], N: [70, 110], P: [30, 65], K: [30, 60], soils: ["Loamy", "Clay"], seasons: ["Kharif", "Rabi"], regions: ["North", "Central", "West"], n: 200 },
+      { crop: "Millet", temp: [25, 35], hum: [30, 55], rain: [25, 70], ph: [5.5, 7.5], moist: [15, 40], N: [15, 45], P: [10, 40], K: [10, 40], soils: ["Sandy", "Red", "Loamy"], seasons: ["Kharif", "Zaid"], regions: ["South", "West"], n: 200 },
+      { crop: "Cotton", temp: [28, 40], hum: [50, 70], rain: [60, 120], ph: [6.0, 8.0], moist: [30, 55], N: [10, 30], P: [10, 30], K: [15, 35], soils: ["Black", "Red", "Sandy"], seasons: ["Kharif"], regions: ["South", "Central"], n: 200 },
+      { crop: "Jute", temp: [27, 37], hum: [75, 95], rain: [140, 280], ph: [6.0, 7.5], moist: [60, 90], N: [60, 100], P: [30, 60], K: [30, 60], soils: ["Clay", "Loamy"], seasons: ["Kharif"], regions: ["East"], n: 200 },
+      { crop: "Apple", temp: [2, 12], hum: [65, 90], rain: [100, 180], ph: [5.5, 6.8], moist: [45, 75], N: [40, 75], P: [25, 55], K: [30, 60], soils: ["Loamy", "Sandy"], seasons: ["Rabi"], regions: ["North"], n: 200 },
+      { crop: "Banana", temp: [24, 34], hum: [75, 95], rain: [150, 280], ph: [5.5, 7.0], moist: [50, 85], N: [80, 120], P: [30, 60], K: [50, 90], soils: ["Sandy", "Loamy"], seasons: ["Kharif", "Zaid"], regions: ["South", "East"], n: 200 },
+      { crop: "Grapes", temp: [22, 32], hum: [55, 80], rain: [60, 110], ph: [6.0, 7.5], moist: [30, 60], N: [20, 55], P: [15, 45], K: [30, 65], soils: ["Sandy", "Loamy"], seasons: ["Rabi"], regions: ["South", "West"], n: 200 },
+      { crop: "Mango", temp: [26, 38], hum: [45, 80], rain: [80, 150], ph: [5.5, 7.5], moist: [35, 65], N: [15, 40], P: [10, 30], K: [15, 40], soils: ["Sandy", "Red", "Loamy"], seasons: ["Zaid", "Kharif"], regions: ["South", "Central"], n: 200 },
+      { crop: "Papaya", temp: [24, 34], hum: [65, 90], rain: [100, 200], ph: [6.0, 7.5], moist: [45, 80], N: [40, 70], P: [20, 50], K: [20, 50], soils: ["Clay", "Loamy"], seasons: ["Kharif", "Zaid"], regions: ["South", "East"], n: 200 },
+      { crop: "Coconut", temp: [24, 34], hum: [75, 95], rain: [150, 250], ph: [5.5, 7.0], moist: [55, 85], N: [15, 35], P: [10, 30], K: [50, 90], soils: ["Sandy", "Loamy"], seasons: ["Kharif", "Zaid"], regions: ["South"], n: 200 },
+      { crop: "Coffee", temp: [18, 26], hum: [70, 95], rain: [120, 240], ph: [5.5, 6.5], moist: [55, 85], N: [40, 75], P: [20, 50], K: [20, 60], soils: ["Clay", "Red"], seasons: ["Kharif", "Rabi"], regions: ["South"], n: 200 },
+      { crop: "Sugarcane", temp: [23, 38], hum: [60, 90], rain: [150, 300], ph: [6.0, 7.5], moist: [50, 85], N: [70, 120], P: [30, 60], K: [15, 55], soils: ["Clay", "Loamy", "Black"], seasons: ["Kharif", "Zaid"], regions: ["South", "Central"], n: 150 },
+      { crop: "Chickpea", temp: [18, 27], hum: [35, 60], rain: [50, 90], ph: [6.0, 8.0], moist: [20, 45], N: [35, 70], P: [55, 90], K: [15, 45], soils: ["Sandy", "Loamy", "Black"], seasons: ["Rabi"], regions: ["North", "Central"], n: 150 },
+      { crop: "Lentil", temp: [14, 22], hum: [45, 70], rain: [55, 100], ph: [6.0, 8.0], moist: [25, 50], N: [15, 45], P: [20, 55], K: [15, 40], soils: ["Sandy", "Loamy"], seasons: ["Rabi"], regions: ["North", "Central"], n: 150 },
+      { crop: "Groundnut", temp: [25, 35], hum: [40, 65], rain: [60, 120], ph: [5.5, 7.0], moist: [25, 55], N: [15, 40], P: [25, 55], K: [20, 50], soils: ["Sandy", "Loamy", "Red"], seasons: ["Kharif", "Rabi"], regions: ["South", "Central"], n: 150 },
+    ];
+
+    // Clear old data
+    await mongoose.connection.db.collection('crop_samples').deleteMany({});
+
+    const docs = [];
+    for (const def of cropDefs) {
+      for (let i = 0; i < def.n; i++) {
+        docs.push({
+          crop: def.crop,
+          temperature: rnd(...def.temp),
+          humidity: rnd(...def.hum),
+          rainfall: rnd(...def.rain),
+          soil_ph: rnd(...def.ph),
+          soilMoisture: rnd(...def.moist),
+          nitrogen: rnd(...def.N),
+          phosphorus: rnd(...def.P),
+          potassium: rnd(...def.K),
+          soilType: pick(def.soils),
+          season: pick(def.seasons),
+          region: pick(def.regions),
+          createdAt: new Date(),
+        });
+      }
+    }
+
+    await mongoose.connection.db.collection('crop_samples').insertMany(docs);
+    res.json({ message: `Seeded ${docs.length} samples across ${cropDefs.length} crops`, total: docs.length });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Force Reseed — always clears old data, inserts fresh distinct crop ranges
+router.get("/force-reseed", async (req, res) => {
+  try {
+    const rnd = (lo, hi) => parseFloat((lo + Math.random() * (hi - lo)).toFixed(2));
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+    const cropDefs = [
+      { crop: "Rice", temp: [22, 32], hum: [75, 95], rain: [160, 280], ph: [5.5, 7.0], moist: [50, 80], N: [60, 120], P: [25, 55], K: [25, 55], soils: ["Clay", "Loamy"], seasons: ["Kharif"], regions: ["South", "East", "West"], n: 250 },
+      { crop: "Wheat", temp: [8, 18], hum: [40, 65], rain: [50, 100], ph: [6.0, 7.5], moist: [30, 55], N: [80, 120], P: [30, 70], K: [35, 65], soils: ["Loamy", "Sandy"], seasons: ["Rabi"], regions: ["North", "Central"], n: 250 },
+      { crop: "Corn", temp: [20, 30], hum: [55, 75], rain: [80, 160], ph: [5.5, 7.0], moist: [40, 65], N: [70, 110], P: [30, 65], K: [30, 60], soils: ["Loamy", "Clay"], seasons: ["Kharif", "Rabi"], regions: ["North", "Central", "West"], n: 200 },
+      { crop: "Millet", temp: [25, 35], hum: [30, 55], rain: [25, 70], ph: [5.5, 7.5], moist: [15, 40], N: [15, 45], P: [10, 40], K: [10, 40], soils: ["Sandy", "Red", "Loamy"], seasons: ["Kharif", "Zaid"], regions: ["South", "West"], n: 200 },
+      { crop: "Cotton", temp: [28, 40], hum: [50, 70], rain: [60, 120], ph: [6.0, 8.0], moist: [30, 55], N: [10, 30], P: [10, 30], K: [15, 35], soils: ["Black", "Red", "Sandy"], seasons: ["Kharif"], regions: ["South", "Central"], n: 200 },
+      { crop: "Jute", temp: [27, 37], hum: [75, 95], rain: [140, 280], ph: [6.0, 7.5], moist: [60, 90], N: [60, 100], P: [30, 60], K: [30, 60], soils: ["Clay", "Loamy"], seasons: ["Kharif"], regions: ["East"], n: 200 },
+      { crop: "Apple", temp: [2, 12], hum: [65, 90], rain: [100, 180], ph: [5.5, 6.8], moist: [45, 75], N: [40, 75], P: [25, 55], K: [30, 60], soils: ["Loamy", "Sandy"], seasons: ["Rabi"], regions: ["North"], n: 200 },
+      { crop: "Banana", temp: [24, 34], hum: [75, 95], rain: [150, 280], ph: [5.5, 7.0], moist: [50, 85], N: [80, 120], P: [30, 60], K: [50, 90], soils: ["Sandy", "Loamy"], seasons: ["Kharif", "Zaid"], regions: ["South", "East"], n: 200 },
+      { crop: "Grapes", temp: [22, 32], hum: [55, 80], rain: [60, 110], ph: [6.0, 7.5], moist: [30, 60], N: [20, 55], P: [15, 45], K: [30, 65], soils: ["Sandy", "Loamy"], seasons: ["Rabi"], regions: ["South", "West"], n: 200 },
+      { crop: "Mango", temp: [26, 38], hum: [45, 80], rain: [80, 150], ph: [5.5, 7.5], moist: [35, 65], N: [15, 40], P: [10, 30], K: [15, 40], soils: ["Sandy", "Red", "Loamy"], seasons: ["Zaid", "Kharif"], regions: ["South", "Central"], n: 200 },
+      { crop: "Papaya", temp: [24, 34], hum: [65, 90], rain: [100, 200], ph: [6.0, 7.5], moist: [45, 80], N: [40, 70], P: [20, 50], K: [20, 50], soils: ["Clay", "Loamy"], seasons: ["Kharif", "Zaid"], regions: ["South", "East"], n: 200 },
+      { crop: "Coconut", temp: [24, 34], hum: [75, 95], rain: [150, 250], ph: [5.5, 7.0], moist: [55, 85], N: [15, 35], P: [10, 30], K: [50, 90], soils: ["Sandy", "Loamy"], seasons: ["Kharif", "Zaid"], regions: ["South"], n: 200 },
+      { crop: "Coffee", temp: [18, 26], hum: [70, 95], rain: [120, 240], ph: [5.5, 6.5], moist: [55, 85], N: [40, 75], P: [20, 50], K: [20, 60], soils: ["Clay", "Red"], seasons: ["Kharif", "Rabi"], regions: ["South"], n: 200 },
+      { crop: "Sugarcane", temp: [23, 38], hum: [60, 90], rain: [150, 300], ph: [6.0, 7.5], moist: [50, 85], N: [70, 120], P: [30, 60], K: [15, 55], soils: ["Clay", "Loamy", "Black"], seasons: ["Kharif", "Zaid"], regions: ["South", "Central"], n: 150 },
+      { crop: "Chickpea", temp: [18, 27], hum: [35, 60], rain: [50, 90], ph: [6.0, 8.0], moist: [20, 45], N: [35, 70], P: [55, 90], K: [15, 45], soils: ["Sandy", "Loamy", "Black"], seasons: ["Rabi"], regions: ["North", "Central"], n: 150 },
+      { crop: "Lentil", temp: [14, 22], hum: [45, 70], rain: [55, 100], ph: [6.0, 8.0], moist: [25, 50], N: [15, 45], P: [20, 55], K: [15, 40], soils: ["Sandy", "Loamy"], seasons: ["Rabi"], regions: ["North", "Central"], n: 150 },
+      { crop: "Groundnut", temp: [25, 35], hum: [40, 65], rain: [60, 120], ph: [5.5, 7.0], moist: [25, 55], N: [15, 40], P: [25, 55], K: [20, 50], soils: ["Sandy", "Loamy", "Red"], seasons: ["Kharif", "Rabi"], regions: ["South", "Central"], n: 150 },
+    ];
+
+    await mongoose.connection.db.collection('crop_samples').deleteMany({});
+    const docs = [];
+    for (const def of cropDefs) {
+      for (let i = 0; i < def.n; i++) {
+        docs.push({
+          crop: def.crop,
+          temperature: rnd(...def.temp),
+          humidity: rnd(...def.hum),
+          rainfall: rnd(...def.rain),
+          soil_ph: rnd(...def.ph),
+          soilMoisture: rnd(...def.moist),
+          nitrogen: rnd(...def.N),
+          phosphorus: rnd(...def.P),
+          potassium: rnd(...def.K),
+          soilType: pick(def.soils),
+          season: pick(def.seasons),
+          region: pick(def.regions),
+          createdAt: new Date(),
+        });
+      }
+    }
+    await mongoose.connection.db.collection('crop_samples').insertMany(docs);
+    res.json({ message: `Force-seeded ${docs.length} samples across ${cropDefs.length} crops. Now call /trigger-retrain`, total: docs.length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Trigger Retrain Route
+router.get("/trigger-retrain", async (req, res) => {
+  try {
+    const scriptPath = path.join(__dirname, '../../ml/train_model.py');
+    const command = `"${pythonExec}" "${scriptPath}"`;
+    console.log("Triggering retrain:", command);
+
+    exec(command, { maxBuffer: 1024 * 2000 }, (error, stdout, stderr) => {
+      if (error) {
+        console.error("Retrain Error:", error);
+        return res.status(500).json({ error: error.message, stderr });
+      }
+      console.log("Retrain Output:", stdout);
+      res.json({ message: "Retraining complete", stdout });
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.post("/predict-crop", async (req, res) => {
   try {
