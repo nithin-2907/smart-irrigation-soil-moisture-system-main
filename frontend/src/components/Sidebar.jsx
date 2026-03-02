@@ -6,7 +6,6 @@ import {
   FaFlask,
   FaHistory,
   FaHome,
-  FaLanguage,
   FaLeaf,
   FaSeedling,
   FaSignInAlt,
@@ -110,10 +109,6 @@ function Sidebar() {
 
         <NavLink to="/market" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
           <FaStore style={{ marginRight: 8 }} /> Market Prices
-        </NavLink>
-
-        <NavLink to="/translator" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
-          <FaLanguage style={{ marginRight: 8 }} /> Translator
         </NavLink>
 
         <NavLink to="/history" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>

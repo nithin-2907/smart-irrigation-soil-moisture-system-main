@@ -7,7 +7,7 @@ const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 router.post('/', async (req, res) => {
     try {
-        const { message, sessionId } = req.body;
+        const { message, sessionId, language } = req.body;
 
         if (!message || !sessionId) {
             return res.status(400).json({ error: 'Message and sessionId are required' });
@@ -38,10 +38,14 @@ router.post('/', async (req, res) => {
             content: msg.content
         }));
 
+        const targetLanguage = language || 'English';
+
         // Add system instruction if needed
         const systemMessage = {
             role: 'system',
-            content: 'You are an intelligent agricultural assistant for the Smart Irrigation System. efficient use of water, help farmers with crop recommendations, weather-based advice, and soil management. Be concise and helpful.'
+            content: `You are an intelligent agricultural assistant for the Smart Irrigation System. Your goal is to guide efficient use of water, help farmers with crop recommendations, weather-based advice, and soil management. Be concise and helpful. 
+
+IMPORTANT: YOU MUST REPLY TO THE USER IN ${targetLanguage.toUpperCase()}. Do not provide answers in any other language.`
         };
 
         const messages = [systemMessage, ...conversationHistory];

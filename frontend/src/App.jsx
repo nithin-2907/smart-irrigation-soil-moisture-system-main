@@ -13,7 +13,6 @@ import Login from "./pages/Login";
 import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
 import SoilHealth from "./pages/SoilHealth";
-import Translator from "./pages/Translator";
 import Weather from "./pages/Weather";
 import YieldPrediction from "./pages/YieldPrediction";
 import "./styles.css";
@@ -68,12 +67,6 @@ function App() {
             <Route path="/market" element={
               <ProtectedRoute>
                 <MarketPrices />
-              </ProtectedRoute>
-            } />
-
-            <Route path="/translator" element={
-              <ProtectedRoute>
-                <Translator />
               </ProtectedRoute>
             } />
 

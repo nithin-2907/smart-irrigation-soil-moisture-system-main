@@ -11,6 +11,12 @@ export default function Chatbot() {
   ]);
   const [sessionId] = useState(`session-${Date.now()}`);
   const [loading, setLoading] = useState(false);
+  const [language, setLanguage] = useState("English");
+
+  const languages = [
+    "English", "Hindi", "Spanish", "French", "Telugu",
+    "Tamil", "Kannada", "Malayalam", "Marathi", "Bengali", "Gujarati"
+  ];
 
   // 2. Declare refs
   const messagesEndRef = useRef(null);
@@ -38,7 +44,7 @@ export default function Chatbot() {
       const response = await fetch("http://localhost:5000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userText, sessionId }),
+        body: JSON.stringify({ message: userText, sessionId, language }),
       });
 
       const data = await response.json();
@@ -68,8 +74,17 @@ export default function Chatbot() {
       {/* Chat Window */}
       {open && (
         <div className="chatbot-container">
-          <div className="chatbot-header">
-            🤖 Smart Assistant
+          <div className="chatbot-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>🤖 Smart Assistant</span>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              style={{ padding: '4px', borderRadius: '4px', border: 'none', outline: 'none', background: '#e2e8f0', color: '#1e293b', fontSize: '12px', cursor: 'pointer' }}
+            >
+              {languages.map(lang => (
+                <option key={lang} value={lang}>{lang}</option>
+              ))}
+            </select>
           </div>
 
           <div className="chatbot-messages">
