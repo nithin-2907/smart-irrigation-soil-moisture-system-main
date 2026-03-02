@@ -11,6 +11,7 @@ import {
   FaSeedling,
   FaSignInAlt,
   FaStore,
+  FaTint,
   FaUserCircle
 } from "react-icons/fa";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -97,6 +98,10 @@ function Sidebar() {
 
         <NavLink to="/yield" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
           <FaChartLine style={{ marginRight: 8 }} /> Yield Prediction
+        </NavLink>
+
+        <NavLink to="/irrigation" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
+          <FaTint style={{ marginRight: 8 }} /> Irrigation Schedule
         </NavLink>
 
         <NavLink to="/disease" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>

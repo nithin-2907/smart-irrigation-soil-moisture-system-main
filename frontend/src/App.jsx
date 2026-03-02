@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import CropRecommendation from "./pages/CropRecommendation";
 import Dashboard from "./pages/Dashboard";
 import History from "./pages/History";
+import IrrigationScheduler from "./pages/IrrigationScheduler";
 import LeafDisease from "./pages/LeafDisease";
 import Login from "./pages/Login";
 import Notifications from "./pages/Notifications";
@@ -91,6 +92,12 @@ function App() {
             <Route path="/notifications" element={
               <ProtectedRoute>
                 <Notifications />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/irrigation" element={
+              <ProtectedRoute>
+                <IrrigationScheduler />
               </ProtectedRoute>
             } />
 

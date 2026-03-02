@@ -23,6 +23,7 @@ const diseaseRoutes = require("./routes/diseaseRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const authRoutes = require("./routes/authRoutes");
+const irrigationRoutes = require("./routes/irrigationRoutes");
 
 
 app.use("/api/history", historyRoutes);
@@ -38,6 +39,7 @@ app.use("/api/disease", diseaseRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/irrigation", irrigationRoutes);
 
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/smart_irrigation";
 mongoose
