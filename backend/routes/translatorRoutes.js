@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
-let translateGoogle = null;
+
+// Safe replacement for translate-google (which used vulnerable safe-eval)
+let translateFn = null;
 try {
-  translateGoogle = require('translate-google');
+  const { translate } = require('@vitalets/google-translate-api');
+  translateFn = translate;
 } catch (e) {
-  // optional package — ok to continue without it
+  // optional — falls back to Google Cloud API or LibreTranslate
 }
 
 // map UI language names -> ISO codes used by translation API
@@ -27,15 +30,16 @@ router.post('/translate', async (req, res) => {
     const source = LANG_MAP[from] || 'auto';
     const target = LANG_MAP[to] || 'en';
 
-    // 1) Try unofficial Google scrapper package (free, no API key) if available
-    if (translateGoogle) {
+    // 1) Try @vitalets/google-translate-api (free, no API key, no safe-eval)
+    if (translateFn) {
       try {
-        const googleResult = await translateGoogle(text, { from: source === 'auto' ? 'auto' : source, to: target });
-        if (googleResult) {
-          return res.json({ translatedText: googleResult, provider: 'google-scraper' });
+        const result = await translateFn(text, { from: source === 'auto' ? undefined : source, to: target });
+        const translated = result?.text;
+        if (translated) {
+          return res.json({ translatedText: translated, provider: 'google-free' });
         }
       } catch (err) {
-        console.warn('translate-google failed, falling back to other providers:', err.message || err);
+        console.warn('google-translate-api failed, falling back:', err.message || err);
       }
     }
 

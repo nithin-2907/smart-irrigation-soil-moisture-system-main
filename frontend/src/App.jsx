@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import History from "./pages/History";
 import LeafDisease from "./pages/LeafDisease";
 import Login from "./pages/Login";
+import Notifications from "./pages/Notifications";
 import Profile from "./pages/Profile";
 import SoilHealth from "./pages/SoilHealth";
 import Translator from "./pages/Translator";
@@ -84,6 +85,12 @@ function App() {
             <Route path="/history" element={
               <ProtectedRoute>
                 <History />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <Notifications />
               </ProtectedRoute>
             } />
 

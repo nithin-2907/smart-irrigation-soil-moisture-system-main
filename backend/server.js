@@ -17,6 +17,11 @@ const historyRoutes = require("./routes/historyRoutes");
 const translatorRoutes = require("./routes/translatorRoutes");
 const yieldRoutes = require("./routes/yieldRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const marketRoutes = require("./routes/marketRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const diseaseRoutes = require("./routes/diseaseRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const profileRoutes = require("./routes/profileRoutes");
 
 app.use("/api/history", historyRoutes);
 app.use("/api/crop", cropRoutes);
@@ -25,23 +30,28 @@ app.use("/api/ml", mlRoutes);
 app.use("/api/yield", yieldRoutes);
 app.use("/api/translator", translatorRoutes);
 app.use("/api/chat", chatRoutes);
-const marketRoutes = require("./routes/marketRoutes");
 app.use("/api/market", marketRoutes);
-
-const dashboardRoutes = require("./routes/dashboardRoutes");
 app.use("/api/dashboard", dashboardRoutes);
-
-const diseaseRoutes = require("./routes/diseaseRoutes");
 app.use("/api/disease", diseaseRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/profile", profileRoutes);
 
-const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/smart_irrigation';
+const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/smart_irrigation";
 mongoose
   .connect(mongoUri)
-  .then(() => console.log("✅ MongoDB connected"))
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    // Start irrigation scheduler after DB is ready
+    const { startScheduler } = require("./services/irrigationScheduler");
+    startScheduler();
+  })
   .catch((err) => console.log("❌ MongoDB error:", err));
 
 app.listen(5000, () => {
   console.log("🚀 Server running on http://localhost:5000");
   const googleEnabled = !!process.env.GOOGLE_TRANSLATE_API_KEY;
-  console.log(`🔤 Google Translate: ${googleEnabled ? 'ENABLED' : 'not configured - set GOOGLE_TRANSLATE_API_KEY in backend/.env'}`);
+  console.log(`🔤 Google Translate: ${googleEnabled ? "ENABLED" : "not configured"}`);
+  const twilioEnabled = !!process.env.TWILIO_ACCOUNT_SID;
+  console.log(`📱 Twilio SMS: ${twilioEnabled ? "ENABLED" : "not configured — add TWILIO_* vars to .env"}`);
 });
+
