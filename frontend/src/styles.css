@@ -19,18 +19,25 @@ body {
 
 /* ================= SIDEBAR ================= */
 .sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 250px;
+  height: 100vh;
   background: linear-gradient(180deg, #06142e, #020c1b);
   color: white;
   padding: 20px 15px;
-  flex-shrink: 0;
+  overflow-y: auto;
+  z-index: 100;
 }
 
 /* ================= MAIN CONTENT ================= */
 .main-content {
   flex: 1;
+  margin-left: 250px;
   padding: 40px;
   overflow-y: auto;
+  min-height: 100vh;
 }
 
 /* ================= PAGE CONTAINER ================= */
