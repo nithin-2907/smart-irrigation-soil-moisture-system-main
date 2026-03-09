@@ -29,14 +29,13 @@ export default function Dashboard() {
 
   const name = user?.name || "Farmer";
 
-  if (loading) return <div className="page-container">Loading Dashboard...</div>;
+  if (loading) return <div className="page-container" style={{ color: "var(--text-secondary)" }}>Loading Dashboard...</div>;
 
-  // KPIs
   const kpiCards = [
     { title: "Avg Soil Moisture", value: stats?.avgMoisture ? `${stats.avgMoisture}%` : "--", icon: "🌱", color: "#22c55e", sub: "7-day avg" },
     { title: "Total Rainfall", value: stats?.totalRain ? `${stats.totalRain} mm` : "0 mm", icon: "🌧", color: "#3b82f6", sub: "This week" },
     { title: "Avg Temperature", value: stats?.avgTemp ? `${stats.avgTemp} °C` : "--", icon: "🌡", color: "#f97316", sub: "" },
-    { title: "Crop Stress", value: stats?.cropStress || "Unknown", icon: "🪡", color: stats?.cropStress === 'High' ? "#ef4444" : "#22c55e", sub: "" }
+    { title: "Crop Stress", value: stats?.cropStress || "Unknown", icon: "🩺", color: stats?.cropStress === 'High' ? "#ef4444" : "#22c55e", sub: "" }
   ];
 
   return (
@@ -44,7 +43,7 @@ export default function Dashboard() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: '20px' }}>
         <div>
           <h1 className="page-title" style={{ marginBottom: '5px' }}>📊 Farm Command Center</h1>
-          <p style={{ color: '#666' }}>Welcome, <b>{name}</b></p>
+          <p style={{ color: 'var(--text-secondary)' }}>Welcome, <b>{name}</b></p>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div className="user-badge" style={{ float: 'none', display: 'inline-block' }}>{new Date().toLocaleDateString()}</div>
@@ -54,23 +53,23 @@ export default function Dashboard() {
       {/* KPI SECTION */}
       <div className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", marginBottom: "30px" }}>
         {kpiCards.map((card, index) => (
-          <div key={index} className="dashboard-card" style={{ borderLeft: `5px solid ${card.color}` }}>
+          <div key={index} className="dashboard-card" style={{ borderLeft: `4px solid ${card.color}` }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <div className="card-title">{card.icon} {card.title}</div>
                 <div className="card-value">{card.value}</div>
-                <div style={{ fontSize: "12px", color: "#888", marginTop: "4px" }}>{card.sub}</div>
+                {card.sub && <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>{card.sub}</div>}
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '30px', marginBottom: '30px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '24px', marginBottom: '24px' }}>
 
         {/* CHART 1: Soil Moisture Trend */}
         <div className="dashboard-card">
-          <h3 style={{ marginBottom: "20px", fontWeight: "600", color: "#444" }}>🌱 Soil Moisture Trend (Last 14 Days)</h3>
+          <h3 style={{ marginBottom: "20px", fontWeight: "600", color: "var(--text-primary)" }}>🌱 Soil Moisture Trend (Last 14 Days)</h3>
           <div style={{ height: "300px", width: "100%" }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={history}>
@@ -85,7 +84,6 @@ export default function Dashboard() {
                 <YAxis unit="%" />
                 <Tooltip />
                 <Area type="monotone" dataKey="moisture" stroke="#22c55e" fillOpacity={1} fill="url(#colorMoisture)" name="Soil Moisture" connectNulls={false} />
-                {/* Threshold Lines could be added as ReferenceLines if needed */}
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -93,7 +91,7 @@ export default function Dashboard() {
 
         {/* CHART 2: Weather Overview */}
         <div className="dashboard-card">
-          <h3 style={{ marginBottom: "20px", fontWeight: "600", color: "#444" }}>🌦 Weather vs Moisture Impact</h3>
+          <h3 style={{ marginBottom: "20px", fontWeight: "600", color: "var(--text-primary)" }}>🌦 Weather vs Moisture Impact</h3>
           <div style={{ height: "300px", width: "100%" }}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={history}>
@@ -114,29 +112,32 @@ export default function Dashboard() {
       </div>
 
       {/* INSIGHTS & ALERTS ROW */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
 
         {/* Weekly Insights */}
         <div className="dashboard-card">
-          <h3 style={{ marginBottom: "15px", fontWeight: "600", color: "#444" }}>📅 Weekly Insights</h3>
+          <h3 style={{ marginBottom: "15px", fontWeight: "600", color: "var(--text-primary)" }}>📅 Weekly Insights</h3>
           {history.length > 0 ? (
-            <ul style={{ paddingLeft: "20px", lineHeight: "1.8", color: "#555" }}>
+            <ul style={{ paddingLeft: "20px", lineHeight: "1.8", color: "var(--text-secondary)" }}>
               <li>Avg Soil Moisture is <b>{stats?.avgMoisture}%</b>.</li>
               <li>Total Rainfall recorded: <b>{stats?.totalRain} mm</b>.</li>
               <li>Highest Temperature: <b>{Math.max(...history.map(h => h.temperature || 0))}°C</b>.</li>
               <li>Data points analyzed: <b>{stats?.dataPoints}</b>.</li>
             </ul>
           ) : (
-            <p style={{ color: "#777" }}>Not enough data for insights yet.</p>
+            <p style={{ color: "var(--text-muted)" }}>Not enough data for insights yet.</p>
           )}
         </div>
 
         {/* Actionable Alerts */}
-        <div className="dashboard-card" style={{ background: stats?.cropStress === 'High' ? '#fef2f2' : '#f0fdf4', border: '1px solid ' + (stats?.cropStress === 'High' ? '#fca5a5' : '#bbf7d0') }}>
+        <div className="dashboard-card" style={{
+          background: stats?.cropStress === 'High' ? 'rgba(254, 202, 202, 0.15)' : 'rgba(34, 197, 94, 0.08)',
+          border: '1px solid ' + (stats?.cropStress === 'High' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.2)')
+        }}>
           <h3 style={{ marginBottom: "15px", fontWeight: "600", color: stats?.cropStress === 'High' ? "#ef4444" : "#16a34a" }}>
             {stats?.cropStress === 'High' ? '🚨 Action Required' : '✅ Farm Status Healthy'}
           </h3>
-          <p style={{ fontSize: "16px", marginBottom: "10px" }}>
+          <p style={{ fontSize: "15px", marginBottom: "10px", color: "var(--text-secondary)" }}>
             {stats?.cropStress === 'High'
               ? "Soil moisture is critically low. Irrigate immediately."
               : "Moisture levels are healthy. No action needed."}
@@ -147,7 +148,6 @@ export default function Dashboard() {
         </div>
 
       </div>
-
 
     </div>
   );

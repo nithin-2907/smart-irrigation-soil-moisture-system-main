@@ -57,17 +57,17 @@ export default function History() {
         ) : (
           <table className="history-table" style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ background: "#f8f9fa", textAlign: "left" }}>
-                <th style={{ padding: "12px", borderBottom: "2px solid #ddd" }}>Date</th>
-                <th style={{ padding: "12px", borderBottom: "2px solid #ddd" }}>Type</th>
-                <th style={{ padding: "12px", borderBottom: "2px solid #ddd" }}>Result</th>
-                <th style={{ padding: "12px", borderBottom: "2px solid #ddd" }}>Details</th>
+              <tr style={{ background: "var(--table-header-bg)", textAlign: "left" }}>
+                <th style={{ padding: "12px", borderBottom: "2px solid var(--border-color)" }}>Date</th>
+                <th style={{ padding: "12px", borderBottom: "2px solid var(--border-color)" }}>Type</th>
+                <th style={{ padding: "12px", borderBottom: "2px solid var(--border-color)" }}>Result</th>
+                <th style={{ padding: "12px", borderBottom: "2px solid var(--border-color)" }}>Details</th>
               </tr>
             </thead>
             <tbody>
               {history.map((item, index) => (
-                <tr key={index} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={{ padding: "12px", color: "#666" }}>
+                <tr key={index} style={{ borderBottom: "1px solid var(--table-border)" }}>
+                  <td style={{ padding: "12px", color: "var(--text-muted)" }}>
                     {new Date(item.createdAt).toLocaleDateString()} {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </td>
                   <td style={{ padding: "12px", fontWeight: "600", color: "#22c55e" }}>
@@ -79,7 +79,7 @@ export default function History() {
                   <td style={{ padding: "12px", fontWeight: "bold" }}>
                     {formatResult(item)}
                   </td>
-                  <td style={{ padding: "12px", color: "#555", fontSize: "0.9em" }}>
+                  <td style={{ padding: "12px", color: "var(--text-secondary)", fontSize: "0.9em" }}>
                     {formatDescription(item)}
                   </td>
                 </tr>

@@ -84,7 +84,7 @@ export default function IrrigationScheduler() {
                             <div className="card-value" style={{ fontSize: 22 }}>
                                 {result.currentGrowthStage.emoji} {result.currentGrowthStage.stage}
                             </div>
-                            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
+                            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
                                 Day {result.daysSincePlanting} · {result.currentGrowthStage.pct}% through stage
                             </div>
                         </div>
@@ -97,12 +97,12 @@ export default function IrrigationScheduler() {
                             <div className="card-value" style={{ color: "#22c55e" }}>
                                 {result.waterSavedVsFlood} <span style={{ fontSize: 14 }}>mm saved</span>
                             </div>
-                            <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>vs. traditional flood irrigation</div>
+                            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>vs. traditional flood irrigation</div>
                         </div>
                         <div className="dashboard-card card-soil">
                             <div className="card-title">📍 Location · Soil</div>
                             <div className="card-value" style={{ fontSize: 18 }}>{result.location}</div>
-                            <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>
+                            <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>
                                 {result.soilType} soil · {result.crop}
                             </div>
                         </div>
@@ -114,17 +114,17 @@ export default function IrrigationScheduler() {
                         <div style={{ overflowX: "auto" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                                 <thead>
-                                    <tr style={{ background: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
+                                    <tr style={{ background: "var(--table-header-bg)", borderBottom: "2px solid var(--border-color)" }}>
                                         {["Date", "ET₀ (mm)", "ETc (mm)", "Kc", "Rainfall", "Soil Moisture", "Action"].map(h => (
-                                            <th key={h} style={{ padding: "10px 12px", textAlign: "left", color: "#374151", fontWeight: 600 }}>{h}</th>
+                                            <th key={h} style={{ padding: "10px 12px", textAlign: "left", color: "var(--text-primary)", fontWeight: 600 }}>{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {result.schedule.map((day, i) => (
                                         <tr key={day.date} style={{
-                                            background: day.needsIrrigation ? "#fef2f2" : i % 2 === 0 ? "#fff" : "#f9fafb",
-                                            borderBottom: "1px solid #e5e7eb",
+                                            background: day.needsIrrigation ? "rgba(239,68,68,0.08)" : "var(--bg-card)",
+                                            borderBottom: "1px solid var(--table-border)",
                                         }}>
                                             <td style={{ padding: "10px 12px", fontWeight: 600 }}>{day.date}</td>
                                             <td style={{ padding: "10px 12px" }}>{day.ET0}</td>
@@ -159,7 +159,7 @@ export default function IrrigationScheduler() {
                                 </tbody>
                             </table>
                         </div>
-                        <div style={{ marginTop: 12, fontSize: 12, color: "#9ca3af" }}>
+                        <div style={{ marginTop: 12, fontSize: 12, color: "var(--text-muted)" }}>
                             ET₀ = Reference evapotranspiration · ETc = Crop water demand · Kc = Crop coefficient (FAO-56)
                         </div>
                     </div>

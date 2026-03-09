@@ -5,6 +5,7 @@ import Chatbot from "./components/Chatbot";
 import MarketPrices from "./components/MarketPrices";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import CropRecommendation from "./pages/CropRecommendation";
 import Dashboard from "./pages/Dashboard";
 import History from "./pages/History";
@@ -58,10 +59,12 @@ function AppLayout() {
 
 function App() {
   return (
-    <Router>
-      <AppLayout />
-      <Chatbot />
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <AppLayout />
+        <Chatbot />
+      </Router>
+    </ThemeProvider>
   );
 }
 

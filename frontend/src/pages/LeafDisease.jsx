@@ -57,7 +57,7 @@ export default function LeafDisease() {
                             border: "2px dashed #ccc",
                             borderRadius: "12px",
                             padding: "40px",
-                            backgroundColor: "#f9fafb",
+                            backgroundColor: "var(--bg-hover)",
                             cursor: "pointer",
                             marginBottom: "20px"
                         }}
@@ -68,8 +68,8 @@ export default function LeafDisease() {
                         ) : (
                             <>
                                 <div style={{ fontSize: "40px", marginBottom: "10px" }}>📷</div>
-                                <p style={{ color: "#666" }}>Click to Upload or Drag & Drop</p>
-                                <p style={{ fontSize: "12px", color: "#999" }}>JPG, PNG supported</p>
+                                <p style={{ color: "var(--text-secondary)" }}>Click to Upload or Drag & Drop</p>
+                                <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>JPG, PNG supported</p>
                             </>
                         )}
                         <input
@@ -104,18 +104,18 @@ export default function LeafDisease() {
                             {/* Disease Name + Confidence */}
                             <div className="card" style={{ borderTop: `5px solid ${result.disease === 'Healthy' ? '#22c55e' : '#ef4444'}` }}>
                                 <div style={{ marginBottom: "16px" }}>
-                                    <h2 style={{ fontSize: "22px", color: "#333", marginBottom: "8px" }}>
+                                    <h2 style={{ fontSize: "22px", color: "var(--text-primary)", marginBottom: "8px" }}>
                                         {result.disease === 'Healthy' ? '✅' : '⚠️'} {result.disease}
                                     </h2>
                                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                                         <div style={{ flex: 1, background: "#eee", height: "10px", borderRadius: "5px", overflow: "hidden" }}>
                                             <div style={{ width: `${result.confidence}%`, background: result.disease === 'Healthy' ? '#22c55e' : '#ef4444', height: "100%", borderRadius: "5px", transition: "width 0.8s ease" }}></div>
                                         </div>
-                                        <span style={{ fontWeight: "bold", color: "#666", minWidth: 45 }}>{result.confidence}%</span>
+                                        <span style={{ fontWeight: "bold", color: "var(--text-secondary)", minWidth: 45 }}>{result.confidence}%</span>
                                     </div>
                                 </div>
 
-                                <p style={{ lineHeight: "1.6", color: "#444", background: "#f3f4f6", padding: "12px 15px", borderRadius: "8px", fontSize: "14px" }}>
+                                <p style={{ lineHeight: "1.6", color: "var(--text-primary)", background: "var(--bg-hover)", padding: "12px 15px", borderRadius: "8px", fontSize: "14px" }}>
                                     {result.recommendation}
                                 </p>
                             </div>
@@ -136,7 +136,7 @@ export default function LeafDisease() {
                                     }}>
                                         {result.cure.map((step, i) => (
                                             <li key={i} style={{
-                                                fontSize: "13px", lineHeight: "1.6", color: "#374151",
+                                                fontSize: "13px", lineHeight: "1.6", color: "var(--text-primary)",
                                                 paddingLeft: "4px"
                                             }}>
                                                 {step}
@@ -162,7 +162,7 @@ export default function LeafDisease() {
                                     }}>
                                         {result.prevention.map((step, i) => (
                                             <li key={i} style={{
-                                                fontSize: "13px", lineHeight: "1.6", color: "#374151",
+                                                fontSize: "13px", lineHeight: "1.6", color: "var(--text-primary)",
                                                 paddingLeft: "4px"
                                             }}>
                                                 {step}

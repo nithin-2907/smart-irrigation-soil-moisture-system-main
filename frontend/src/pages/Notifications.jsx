@@ -10,9 +10,9 @@ export default function Notifications() {
     const [loading, setLoading] = useState(true);
 
     const typeStyles = {
-        "irrigate": { bg: "#fef2f2", border: "#fca5a5", icon: "🔴", badge: "#dc2626" },
-        "caution": { bg: "#fffbeb", border: "#fcd34d", icon: "🟡", badge: "#d97706" },
-        "no-action": { bg: "#f0fdf4", border: "#86efac", icon: "✅", badge: "#16a34a" },
+        "irrigate": { bg: "rgba(239,68,68,0.1)", border: "rgba(252,165,165,0.5)", icon: "🔴", badge: "#dc2626" },
+        "caution": { bg: "rgba(234,179,8,0.1)", border: "rgba(252,211,77,0.5)", icon: "🟡", badge: "#d97706" },
+        "no-action": { bg: "rgba(34,197,94,0.08)", border: "rgba(134,239,172,0.4)", icon: "✅", badge: "#16a34a" },
     };
 
     const fetchNotifications = async () => {
@@ -65,7 +65,7 @@ export default function Notifications() {
                     <div>
                         {unread > 0
                             ? <span style={{ fontWeight: 600, color: "#dc2626" }}>{unread} unread alert{unread > 1 ? "s" : ""}</span>
-                            : <span style={{ color: "#6b7280" }}>All caught up ✅</span>
+                            : <span style={{ color: "var(--text-muted)" }}>All caught up ✅</span>
                         }
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
@@ -84,14 +84,14 @@ export default function Notifications() {
             </div>
 
             {loading ? (
-                <div className="card" style={{ textAlign: "center", padding: 40, color: "#6b7280" }}>
+                <div className="card" style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>
                     Loading notifications…
                 </div>
             ) : notifications.length === 0 ? (
                 <div className="card" style={{ textAlign: "center", padding: 40 }}>
                     <div style={{ fontSize: 48 }}>🔔</div>
-                    <div style={{ marginTop: 12, color: "#6b7280" }}>No alerts yet.</div>
-                    <div style={{ marginTop: 4, fontSize: 13, color: "#9ca3af" }}>
+                    <div style={{ marginTop: 12, color: "var(--text-muted)" }}>No alerts yet.</div>
+                    <div style={{ marginTop: 4, fontSize: 13, color: "var(--text-muted)" }}>
                         Set your location in <strong>Profile</strong> to start receiving automated irrigation alerts.
                     </div>
                     <button className="primary-btn" style={{ marginTop: 16 }} onClick={() => navigate("/profile")}>
@@ -122,11 +122,11 @@ export default function Notifications() {
                                 <div style={{ flex: 1 }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 4 }}>
                                         <strong style={{ fontSize: 15 }}>{n.title}</strong>
-                                        <span style={{ fontSize: 12, color: "#6b7280" }}>{timeAgo(n.createdAt)}</span>
+                                        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{timeAgo(n.createdAt)}</span>
                                     </div>
                                     <div style={{ marginTop: 4, fontSize: 14, lineHeight: 1.5 }}>{n.message}</div>
                                     {n.weatherSummary && (
-                                        <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>
+                                        <div style={{ marginTop: 6, fontSize: 12, color: "var(--text-muted)" }}>
                                             📍 {n.location} &nbsp;|&nbsp; {n.weatherSummary}
                                         </div>
                                     )}

@@ -159,7 +159,7 @@ export default function Weather() {
             <div className="dashboard-card" style={{ borderLeft: '5px solid #a855f7' }}>
               <div className="card-title">🔮 Predicted Rainfall</div>
               <div className="card-value">{weather.predictedRain} mm</div>
-              <div style={{ fontSize: '12px', color: '#666' }}>Expected tomorrow</div>
+              <div style={{ fontSize: '12px', color: "var(--text-secondary)" }}>Expected tomorrow</div>
             </div>
 
           </div>
@@ -186,7 +186,7 @@ export default function Weather() {
               <div className="card-value" style={{ color: weather.irrigation?.color || '#ccc' }}>
                 {weather.irrigation?.status || 'Unknown'}
               </div>
-              <div style={{ fontSize: '13px', color: '#666', marginTop: '5px' }}>
+              <div style={{ fontSize: '13px', color: "var(--text-secondary)", marginTop: '5px' }}>
                 {weather.irrigation?.reason || 'Based on available data'}
               </div>
             </div>

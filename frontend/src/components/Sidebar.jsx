@@ -7,18 +7,22 @@ import {
   FaHistory,
   FaHome,
   FaLeaf,
+  FaMoon,
   FaSeedling,
   FaStore,
+  FaSun,
   FaTint,
   FaUserCircle
 } from "react-icons/fa";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import api from "../services/api";
 import "./Sidebar.css";
 
 function Sidebar() {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -31,7 +35,6 @@ function Sidebar() {
       } catch { /* silent */ }
     };
     fetchCount();
-    // Poll every 60 seconds
     const id = setInterval(fetchCount, 60_000);
     return () => clearInterval(id);
   }, [user]);
@@ -83,7 +86,7 @@ function Sidebar() {
         </NavLink>
 
         <NavLink to="/weather" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
-          <FaCloudSun style={{ marginRight: 8 }} /> Weather &amp; Irrigation
+          <FaCloudSun style={{ marginRight: 8 }} /> Weather & Irrigation
         </NavLink>
 
         <NavLink to="/soil" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
@@ -123,10 +126,16 @@ function Sidebar() {
         </NavLink>
 
         <NavLink to="/profile" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
-          <FaUserCircle style={{ marginRight: 8 }} /> Profile &amp; Logout
+          <FaUserCircle style={{ marginRight: 8 }} /> Profile
         </NavLink>
 
       </div>
+
+      {/* Theme Toggle */}
+      <button className="theme-toggle" onClick={toggleTheme}>
+        {theme === "dark" ? <FaSun /> : <FaMoon />}
+        {theme === "dark" ? "Light Mode" : "Dark Mode"}
+      </button>
     </div>
   );
 }

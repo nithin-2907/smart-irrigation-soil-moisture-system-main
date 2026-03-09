@@ -54,23 +54,23 @@ export default function Profile() {
 
         {/* Email (read-only) */}
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontWeight: 600, fontSize: 13, color: "#6b7280" }}>EMAIL</label>
-          <p style={{ marginTop: 4 }}>{user.email}</p>
+          <label style={{ fontWeight: 600, fontSize: 13, color: "var(--text-secondary)" }}>EMAIL</label>
+          <p style={{ marginTop: 4, color: "var(--text-primary)" }}>{user.email}</p>
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontWeight: 600, fontSize: 13, color: "#6b7280" }}>ROLE</label>
-          <p style={{ marginTop: 4 }}>{user.role || "farmer"}</p>
+          <label style={{ fontWeight: 600, fontSize: 13, color: "var(--text-secondary)" }}>ROLE</label>
+          <p style={{ marginTop: 4, color: "var(--text-primary)" }}>{user.role || "farmer"}</p>
         </div>
 
-        <hr style={{ margin: "20px 0", borderColor: "#e5e7eb" }} />
+        <hr style={{ margin: "20px 0", borderColor: "var(--border-color)" }} />
         <div style={{ marginBottom: 8, fontWeight: 700, color: "#15803d" }}>
           🌾 Alert Settings
         </div>
 
         {/* Name */}
         <div style={{ marginBottom: 12 }}>
-          <label style={{ fontWeight: 600, fontSize: 13, color: "#374151", display: "block", marginBottom: 4 }}>Name</label>
+          <label style={{ fontWeight: 600, fontSize: 13, color: "var(--text-primary)", display: "block", marginBottom: 4 }}>Name</label>
           <input type="text" value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             placeholder="Your name" style={{ width: "100%" }}
@@ -79,7 +79,7 @@ export default function Profile() {
 
         {/* Phone */}
         <div style={{ marginBottom: 12 }}>
-          <label style={{ fontWeight: 600, fontSize: 13, color: "#374151", display: "block", marginBottom: 4 }}>
+          <label style={{ fontWeight: 600, fontSize: 13, color: "var(--text-primary)", display: "block", marginBottom: 4 }}>
             📱 Phone Number <span style={{ color: "#9ca3af", fontWeight: 400 }}>(with country code)</span>
           </label>
           <input type="tel" value={form.phone}
@@ -91,7 +91,7 @@ export default function Profile() {
 
         {/* Location */}
         <div style={{ marginBottom: 20 }}>
-          <label style={{ fontWeight: 600, fontSize: 13, color: "#374151", display: "block", marginBottom: 4 }}>
+          <label style={{ fontWeight: 600, fontSize: 13, color: "var(--text-primary)", display: "block", marginBottom: 4 }}>
             📍 Farm Location (City Name)
           </label>
           <input type="text" value={form.location}
