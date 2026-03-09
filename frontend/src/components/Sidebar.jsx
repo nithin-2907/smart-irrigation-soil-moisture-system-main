@@ -8,7 +8,6 @@ import {
   FaHome,
   FaLeaf,
   FaSeedling,
-  FaSignInAlt,
   FaStore,
   FaTint,
   FaUserCircle
@@ -77,10 +76,6 @@ function Sidebar() {
 
         <NavLink to="/" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
           <FaHome style={{ marginRight: 8 }} /> Dashboard
-        </NavLink>
-
-        <NavLink to="/login" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
-          <FaSignInAlt style={{ marginRight: 8 }} /> Login
         </NavLink>
 
         <NavLink to="/crop" className={({ isActive }) => isActive ? "sidebar-item active" : "sidebar-item"}>
