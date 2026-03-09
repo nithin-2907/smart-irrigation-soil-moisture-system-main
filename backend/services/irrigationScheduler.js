@@ -7,6 +7,7 @@ const cron = require("node-cron");
 const axios = require("axios");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
+const WeatherData = require("../models/WeatherData");
 const { sendSMS } = require("./smsSender");
 
 const OWM_KEY = process.env.OPENWEATHER_API_KEY;
@@ -59,6 +60,33 @@ async function getWeather(location) {
     return res.data;
 }
 
+// ── Save weather to WeatherData collection (for dashboard charts) ─────────────
+async function saveWeatherData(weather, city) {
+    try {
+        const temp = weather.main?.temp ?? 0;
+        const hum = weather.main?.humidity ?? 0;
+        const rain = weather.rain?.["1h"] ?? 0;
+        const wind = weather.wind?.speed ?? 0;
+        const press = weather.main?.pressure ?? 0;
+
+        // Same soil moisture formula as weatherRoutes.js
+        let soilMoisture = (hum * 0.5) + (rain * 0.3) - (temp * 0.1) - (wind * 0.1);
+        soilMoisture = Math.max(0, Math.min(100, soilMoisture));
+
+        await WeatherData.create({
+            temperature: temp,
+            humidity: hum,
+            rainfall: rain,
+            windSpeed: wind,
+            pressure: press,
+            city: city,
+            soilMoisture: parseFloat(soilMoisture.toFixed(1)),
+        });
+    } catch (err) {
+        console.error(`⚠️  Failed to save WeatherData for ${city}:`, err.message);
+    }
+}
+
 // ── Process one farmer ────────────────────────────────────────────────────────
 async function processUser(user) {
     if (!user.location) return;
@@ -70,6 +98,9 @@ async function processUser(user) {
         console.error(`⚠️  Weather fetch failed for ${user.email} (${user.location}):`, err.message);
         return;
     }
+
+    // Save weather data for dashboard charts
+    await saveWeatherData(weather, user.location);
 
     const decision = makeDecision(weather);
     const weatherSummary = `Temp: ${weather.main?.temp?.toFixed(1)}°C, Humidity: ${weather.main?.humidity}%, Wind: ${weather.wind?.speed} m/s`;

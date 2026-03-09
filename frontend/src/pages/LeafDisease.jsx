@@ -45,10 +45,8 @@ export default function LeafDisease() {
 
     return (
         <div className="page-container">
-            <h1 className="page-title">🦠 Leaf Disease Diagnosis</h1>
-            <p style={{ color: "#666", marginBottom: "30px" }}>
-                Upload a clear photo of your affected plant leaf. Our AI model will analyze it and suggest treatments.
-            </p>
+            <h1 className="page-title">🍃 Leaf Disease Diagnosis</h1>
+
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "40px" }}>
 
@@ -102,34 +100,80 @@ export default function LeafDisease() {
                     )}
 
                     {result && (
-                        <div className="card" style={{ borderTop: `5px solid ${result.disease === 'Healthy' ? '#22c55e' : '#ef4444'}` }}>
-                            <div style={{ marginBottom: "20px" }}>
-                                <h2 style={{ fontSize: "24px", color: "#333", marginBottom: "5px" }}>{result.disease}</h2>
-                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                    <div style={{ flex: 1, background: "#eee", height: "10px", borderRadius: "5px", overflow: "hidden" }}>
-                                        <div style={{ width: `${result.confidence}%`, background: result.disease === 'Healthy' ? '#22c55e' : '#ef4444', height: "100%" }}></div>
+                        <>
+                            {/* Disease Name + Confidence */}
+                            <div className="card" style={{ borderTop: `5px solid ${result.disease === 'Healthy' ? '#22c55e' : '#ef4444'}` }}>
+                                <div style={{ marginBottom: "16px" }}>
+                                    <h2 style={{ fontSize: "22px", color: "#333", marginBottom: "8px" }}>
+                                        {result.disease === 'Healthy' ? '✅' : '⚠️'} {result.disease}
+                                    </h2>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                        <div style={{ flex: 1, background: "#eee", height: "10px", borderRadius: "5px", overflow: "hidden" }}>
+                                            <div style={{ width: `${result.confidence}%`, background: result.disease === 'Healthy' ? '#22c55e' : '#ef4444', height: "100%", borderRadius: "5px", transition: "width 0.8s ease" }}></div>
+                                        </div>
+                                        <span style={{ fontWeight: "bold", color: "#666", minWidth: 45 }}>{result.confidence}%</span>
                                     </div>
-                                    <span style={{ fontWeight: "bold", color: "#666" }}>{result.confidence}%</span>
                                 </div>
+
+                                <p style={{ lineHeight: "1.6", color: "#444", background: "#f3f4f6", padding: "12px 15px", borderRadius: "8px", fontSize: "14px" }}>
+                                    {result.recommendation}
+                                </p>
                             </div>
 
-                            <h4 style={{ color: "#555", marginBottom: "10px" }}>📝 Recommendation:</h4>
-                            <p style={{ lineHeight: "1.6", color: "#444", background: "#f3f4f6", padding: "15px", borderRadius: "8px" }}>
-                                {result.recommendation}
-                            </p>
-                        </div>
+                            {/* Cure Section */}
+                            {result.cure && result.cure.length > 0 && (
+                                <div className="card" style={{
+                                    borderLeft: "4px solid #ef4444",
+                                    background: "linear-gradient(135deg, #fef2f2, #fff5f5)",
+                                    marginTop: "16px"
+                                }}>
+                                    <h3 style={{ color: "#dc2626", marginBottom: "12px", fontSize: "16px" }}>
+                                        💊 How to Cure
+                                    </h3>
+                                    <ol style={{
+                                        paddingLeft: "20px", margin: 0,
+                                        display: "flex", flexDirection: "column", gap: "8px"
+                                    }}>
+                                        {result.cure.map((step, i) => (
+                                            <li key={i} style={{
+                                                fontSize: "13px", lineHeight: "1.6", color: "#374151",
+                                                paddingLeft: "4px"
+                                            }}>
+                                                {step}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </div>
+                            )}
+
+                            {/* Prevention Section */}
+                            {result.prevention && result.prevention.length > 0 && (
+                                <div className="card" style={{
+                                    borderLeft: "4px solid #22c55e",
+                                    background: "linear-gradient(135deg, #f0fdf4, #f7fef9)",
+                                    marginTop: "16px"
+                                }}>
+                                    <h3 style={{ color: "#16a34a", marginBottom: "12px", fontSize: "16px" }}>
+                                        🛡️ How to Prevent
+                                    </h3>
+                                    <ol style={{
+                                        paddingLeft: "20px", margin: 0,
+                                        display: "flex", flexDirection: "column", gap: "8px"
+                                    }}>
+                                        {result.prevention.map((step, i) => (
+                                            <li key={i} style={{
+                                                fontSize: "13px", lineHeight: "1.6", color: "#374151",
+                                                paddingLeft: "4px"
+                                            }}>
+                                                {step}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </div>
+                            )}
+                        </>
                     )}
 
-                    {!result && !error && (
-                        <div className="card" style={{ height: 'fit-content', opacity: 0.7 }}>
-                            <h3>How it works</h3>
-                            <ul style={{ paddingLeft: '20px', lineHeight: '2', color: '#666' }}>
-                                <li>Take a clear photo of the infected leaf.</li>
-                                <li>Upload it here.</li>
-                                <li>Get instant diagnosis and cure.</li>
-                            </ul>
-                        </div>
-                    )}
                 </div>
 
             </div>

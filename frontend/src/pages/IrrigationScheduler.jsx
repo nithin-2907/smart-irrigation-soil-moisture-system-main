@@ -36,11 +36,8 @@ export default function IrrigationScheduler() {
 
     return (
         <div className="page-container">
-            <h1 className="page-title">💧 Smart Irrigation Scheduler</h1>
-            <p style={{ color: "#6b7280", marginBottom: 24, fontSize: 14 }}>
-                Uses the <strong>FAO-56 Penman-Monteith</strong> water balance method — the same standard used by government agricultural departments.
-                No soil sensors needed.
-            </p>
+            <h1 className="page-title">💧 Irrigation Scheduler</h1>
+
 
             {/* Form */}
             <div className="card" style={{ marginBottom: 24 }}>

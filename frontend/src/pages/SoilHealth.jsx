@@ -196,9 +196,7 @@ const SoilHealth = () => {
                 <span>🌡️ <strong>Soil Temp</strong>: {geoData.soilTemperature}°C</span>
               )}
             </div>
-            <div style={{ marginTop: 6, color: "#6b7280", fontSize: 12 }}>
-              ✅ All fields auto-filled. Soil moisture & temperature from Open-Meteo (real-time). N/P/K/pH from regional soil model.
-            </div>
+
           </div>
         )}
 
@@ -248,9 +246,7 @@ const SoilHealth = () => {
           )}
         </div>
 
-        <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
-          💡 Use <strong>📍 Auto-fill from My Location</strong> to auto-fill all soil parameters from real-time satellite data for your GPS location.
-        </div>
+
 
         {error && <p className="msg error" style={{ marginTop: 8 }}>{error}</p>}
       </div>

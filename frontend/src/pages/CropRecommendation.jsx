@@ -195,9 +195,7 @@ export default function CropRecommendation() {
               <span>🏔️ <strong>Soil Type</strong>: {geoData.soilType}</span>
               <span>📅 <strong>Season</strong>: {geoData.season}</span>
             </div>
-            <div style={{ marginTop: 6, color: "#6b7280", fontSize: 12 }}>
-              ✅ All fields auto-filled. Weather from Open-Meteo · Soil from regional model · Season auto-detected.
-            </div>
+
           </div>
         )}
 
@@ -322,9 +320,7 @@ export default function CropRecommendation() {
           </div>
         </form>
 
-        <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
-          💡 Click <strong>📍 Auto-fill from My Location</strong> to instantly populate all fields using real-time weather and soil data from your GPS location.
-        </div>
+
       </div>
 
       {/* Result Card */}

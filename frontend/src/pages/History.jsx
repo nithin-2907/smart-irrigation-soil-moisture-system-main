@@ -53,7 +53,7 @@ export default function History() {
         {loading ? (
           <p>Loading history...</p>
         ) : history.length === 0 ? (
-          <p>No history found. Try using some features first!</p>
+          <p>No history yet.</p>
         ) : (
           <table className="history-table" style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>

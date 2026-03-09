@@ -67,9 +67,6 @@ export default function Profile() {
         <div style={{ marginBottom: 8, fontWeight: 700, color: "#15803d" }}>
           🌾 Alert Settings
         </div>
-        <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 16 }}>
-          Set your phone number and farm location to receive automated SMS irrigation alerts.
-        </div>
 
         {/* Name */}
         <div style={{ marginBottom: 12 }}>
@@ -102,9 +99,6 @@ export default function Profile() {
             placeholder="e.g. Bangalore, Mumbai, Chennai"
             style={{ width: "100%" }}
           />
-          <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 4 }}>
-            Used to fetch weather data for automated irrigation alerts every 6 hours.
-          </div>
         </div>
 
         <button className="primary-btn" onClick={handleSave} disabled={saving}

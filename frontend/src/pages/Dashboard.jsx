@@ -33,10 +33,10 @@ export default function Dashboard() {
 
   // KPIs
   const kpiCards = [
-    { title: "Avg Soil Moisture", value: stats?.avgMoisture ? `${stats.avgMoisture}%` : "--", icon: "🌱", color: "#22c55e", sub: "Last 7 days avg" },
+    { title: "Avg Soil Moisture", value: stats?.avgMoisture ? `${stats.avgMoisture}%` : "--", icon: "🌱", color: "#22c55e", sub: "7-day avg" },
     { title: "Total Rainfall", value: stats?.totalRain ? `${stats.totalRain} mm` : "0 mm", icon: "🌧", color: "#3b82f6", sub: "This week" },
-    { title: "Avg Temperature", value: stats?.avgTemp ? `${stats.avgTemp} °C` : "--", icon: "🌡", color: "#f97316", sub: "Warm weather" },
-    { title: "Crop Stress", value: stats?.cropStress || "Unknown", icon: "🩺", color: stats?.cropStress === 'High' ? "#ef4444" : "#22c55e", sub: "Based on moisture" }
+    { title: "Avg Temperature", value: stats?.avgTemp ? `${stats.avgTemp} °C` : "--", icon: "🌡", color: "#f97316", sub: "" },
+    { title: "Crop Stress", value: stats?.cropStress || "Unknown", icon: "🪡", color: stats?.cropStress === 'High' ? "#ef4444" : "#22c55e", sub: "" }
   ];
 
   return (
@@ -44,7 +44,7 @@ export default function Dashboard() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: '20px' }}>
         <div>
           <h1 className="page-title" style={{ marginBottom: '5px' }}>📊 Farm Command Center</h1>
-          <p style={{ color: '#666' }}>Welcome back, <b>{name}</b>. Here is your farm's health overview.</p>
+          <p style={{ color: '#666' }}>Welcome, <b>{name}</b></p>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div className="user-badge" style={{ float: 'none', display: 'inline-block' }}>{new Date().toLocaleDateString()}</div>
@@ -138,8 +138,8 @@ export default function Dashboard() {
           </h3>
           <p style={{ fontSize: "16px", marginBottom: "10px" }}>
             {stats?.cropStress === 'High'
-              ? "Critical: Soil moisture is low (<30%). Irrigation is highly recommended immediately to prevent crop stress."
-              : "Conditions are improved. Soil moisture levels are within the healthy range. No immediate action needed."}
+              ? "Soil moisture is critically low. Irrigate immediately."
+              : "Moisture levels are healthy. No action needed."}
           </p>
           {stats?.cropStress === 'High' && (
             <button className="primary-btn" style={{ background: "#ef4444", marginTop: "10px" }}>View Irrigation Plan</button>
@@ -148,9 +148,6 @@ export default function Dashboard() {
 
       </div>
 
-      <div style={{ marginTop: '30px', textAlign: 'center', color: '#999', fontSize: '12px' }}>
-        Last updated: {new Date().toLocaleTimeString()}
-      </div>
 
     </div>
   );
