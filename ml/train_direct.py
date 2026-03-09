@@ -77,7 +77,7 @@ print(f"Feature matrix: {X.shape[0]} rows × {X.shape[1]} columns")
 # ── Train ──────────────────────────────────────────────────────────────────────
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
-model = RandomForestClassifier(n_estimators=200, max_depth=None, random_state=42, n_jobs=-1)
+model = RandomForestClassifier(n_estimators=50, max_depth=None, random_state=42, n_jobs=-1)
 model.fit(X_train, y_train)
 
 y_pred = model.predict(X_test)
@@ -99,7 +99,7 @@ payload = {
 
 # Save to ml/model.pkl (same location predict.py looks for)
 out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model.pkl")
-joblib.dump(payload, out_path)
+joblib.dump(payload, out_path, compress=3)
 print(f"\n✅ Model saved → {out_path}")
 print(f"   Features: {len(payload['feature_columns'])}")
 print(f"   Categorical values: { {k: len(v) for k,v in cat_values.items()} }")

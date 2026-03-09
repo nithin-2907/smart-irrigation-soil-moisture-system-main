@@ -2,6 +2,9 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
+const { spawn } = require("child_process");
+const path = require("path");
+const fs = require("fs");
 
 dotenv.config();
 
@@ -58,5 +61,27 @@ app.listen(5000, () => {
   console.log(`🔤 Google Translate: ${googleEnabled ? "ENABLED" : "not configured"}`);
   const twilioEnabled = !!process.env.TWILIO_ACCOUNT_SID;
   console.log(`📱 Twilio SMS: ${twilioEnabled ? "ENABLED" : "not configured — add TWILIO_* vars to .env"}`);
+
+  // ── Auto-start Python prediction server (loads model once, fast for all subsequent requests) ───
+  const venvPython = path.join(__dirname, '..', '.venv', 'Scripts', 'python.exe');
+  const pythonBin = fs.existsSync(venvPython) ? venvPython : 'python';
+  const predictServerScript = path.join(__dirname, '..', 'ml', 'predict_server.py');
+
+  if (fs.existsSync(predictServerScript)) {
+    const pyServer = spawn(pythonBin, [predictServerScript], {
+      detached: false,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    pyServer.stdout.on('data', d => console.log(`[PredictServer] ${d.toString().trim()}`));
+    pyServer.stderr.on('data', d => console.error(`[PredictServer ERR] ${d.toString().trim()}`));
+    pyServer.on('close', code => console.log(`[PredictServer] exited with code ${code}`));
+    pyServer.on('error', err => console.error('[PredictServer] Failed to start:', err.message));
+    process.on('exit', () => { try { pyServer.kill(); } catch (e) { } });
+    process.on('SIGINT', () => { try { pyServer.kill(); } catch (e) { } process.exit(); });
+    process.on('SIGTERM', () => { try { pyServer.kill(); } catch (e) { } process.exit(); });
+    console.log('🐍 Python prediction server starting (crop predictions will be instant once ready)...');
+  } else {
+    console.warn('⚠️  predict_server.py not found — predictions use slower child process fallback');
+  }
 });
 

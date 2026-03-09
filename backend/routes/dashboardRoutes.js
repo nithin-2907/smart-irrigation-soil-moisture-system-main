@@ -51,28 +51,50 @@ router.get('/stats', async (req, res) => {
     }
 });
 
-// GET /api/dashboard/history - Returns daily data for charts
+// GET /api/dashboard/history - Returns daily data for charts (last 14 days rolling window)
 router.get('/history', async (req, res) => {
     try {
-        // Get last 14 days of data
-        const limit = 14;
-        const historyData = await WeatherData.find()
-            .sort({ createdAt: -1 })
-            .limit(limit * 24); // Assuming hourly data, fetch enough to aggregate
+        // Build a 14-day rolling window: from 13 days ago (00:00) to end of today
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
 
-        // We want to group by day for the charts usually, 
-        // but if we have limited data, returning actual data points is fine.
-        // For line charts, returning the last N records is often simplest.
+        const windowStart = new Date();
+        windowStart.setDate(windowStart.getDate() - 13);
+        windowStart.setHours(0, 0, 0, 0);
 
-        // Let's return the last 20 records reversed (oldest to newest) for the chart
-        const chartData = historyData.slice(0, 20).reverse().map(d => ({
-            date: new Date(d.createdAt).toLocaleDateString('en-US', { disable_year: true, month: 'short', day: 'numeric' }),
-            fullDate: d.createdAt,
-            moisture: d.soilMoisture || 0,
-            rainfall: d.rainfall || 0,
-            temperature: d.temperature || 0,
-            humidity: d.humidity || 0
-        }));
+        // Fetch all records within the 14-day window
+        const rawData = await WeatherData.find({
+            createdAt: { $gte: windowStart, $lte: today }
+        }).sort({ createdAt: 1 });
+
+        // Build a map: "MMM D" -> { moisture[], rainfall[], temperature[], humidity[] }
+        const dayBuckets = {};
+        rawData.forEach(d => {
+            const label = new Date(d.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            if (!dayBuckets[label]) dayBuckets[label] = { moisture: [], rainfall: [], temperature: [], humidity: [] };
+            if (d.soilMoisture != null) dayBuckets[label].moisture.push(d.soilMoisture);
+            if (d.rainfall != null) dayBuckets[label].rainfall.push(d.rainfall);
+            if (d.temperature != null) dayBuckets[label].temperature.push(d.temperature);
+            if (d.humidity != null) dayBuckets[label].humidity.push(d.humidity);
+        });
+
+        const avg = arr => arr.length ? parseFloat((arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(1)) : null;
+
+        // Generate one entry per day in the window, newest day last
+        const chartData = [];
+        for (let i = 13; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const bucket = dayBuckets[label] || {};
+            chartData.push({
+                date: label,
+                moisture: avg(bucket.moisture || []),
+                rainfall: avg(bucket.rainfall || []),
+                temperature: avg(bucket.temperature || []),
+                humidity: avg(bucket.humidity || [])
+            });
+        }
 
         res.json(chartData);
 

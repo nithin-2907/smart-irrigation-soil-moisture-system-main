@@ -241,13 +241,9 @@ const SoilHealth = () => {
             {loading ? "Analyzing…" : "🔬 Analyze Soil"}
           </button>
 
-          {user?.role === "admin" ? (
+          {user?.role === "admin" && (
             <button className="btn" onClick={trainSoilModel} disabled={trainLoading}>
               {trainLoading ? "Training…" : "Train soil model"}
-            </button>
-          ) : (
-            <button className="btn" disabled style={{ opacity: 0.5 }} title="Admin only">
-              Train (admin only)
             </button>
           )}
         </div>

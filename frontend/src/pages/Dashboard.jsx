@@ -84,7 +84,7 @@ export default function Dashboard() {
                 <XAxis dataKey="date" />
                 <YAxis unit="%" />
                 <Tooltip />
-                <Area type="monotone" dataKey="moisture" stroke="#22c55e" fillOpacity={1} fill="url(#colorMoisture)" name="Soil Moisture" />
+                <Area type="monotone" dataKey="moisture" stroke="#22c55e" fillOpacity={1} fill="url(#colorMoisture)" name="Soil Moisture" connectNulls={false} />
                 {/* Threshold Lines could be added as ReferenceLines if needed */}
               </AreaChart>
             </ResponsiveContainer>
@@ -104,8 +104,8 @@ export default function Dashboard() {
                 <Tooltip />
                 <Legend />
                 <Bar yAxisId="right" dataKey="rainfall" barSize={20} fill="#3b82f6" name="Rainfall (mm)" />
-                <Line yAxisId="left" type="monotone" dataKey="temperature" stroke="#f97316" name="Temp (°C)" />
-                <Line yAxisId="left" type="monotone" dataKey="moisture" stroke="#22c55e" strokeWidth={2} dot={false} name="Moisture (%)" />
+                <Line yAxisId="left" type="monotone" dataKey="temperature" stroke="#f97316" name="Temp (°C)" connectNulls={false} />
+                <Line yAxisId="left" type="monotone" dataKey="moisture" stroke="#22c55e" strokeWidth={2} dot={false} name="Moisture (%)" connectNulls={false} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>

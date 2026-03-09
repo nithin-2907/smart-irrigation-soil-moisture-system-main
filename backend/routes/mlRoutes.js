@@ -271,69 +271,106 @@ router.post("/predict-crop", async (req, res) => {
       return res.status(400).json({ error: "temperature, humidity and rainfall are required" });
     }
 
-    const scriptPath = path.join(__dirname, "../../ml/predict.py");
+    const payload = {
+      temperature: Number(temperature),
+      humidity: Number(humidity),
+      rainfall: Number(rainfall),
+      soil_ph: soil_ph ?? null,
+      soilMoisture: soilMoisture ?? null,
+      nitrogen: nitrogen ?? null,
+      phosphorus: phosphorus ?? null,
+      potassium: potassium ?? null,
+      soilType: soilType || '',
+      region: region || '',
+      season: season || ''
+    };
 
-    const args = [
-      Number(temperature),
-      Number(humidity),
-      Number(rainfall),
-      soil_ph ?? 'None',
-      soilMoisture ?? 'None',
-      nitrogen ?? 'None',
-      phosphorus ?? 'None',
-      potassium ?? 'None',
-      soilType ? String(soilType) : '',
-      region ? String(region) : '',
-      season ? String(season) : ''
-    ];
-
-    const command = `"${pythonExec}" "${scriptPath}" ${args.map(a => JSON.stringify(a)).join(' ')}`;
-
-    exec(command, async (error, stdout, stderr) => {
-      console.log('PREDICT-CROP STDOUT >>>', JSON.stringify(stdout));
-      console.log('PREDICT-CROP STDERR >>>', JSON.stringify(stderr));
-      if (error) {
-        console.error('predict-crop error', error, stderr);
-        return res.status(500).json({ error: error.message, stderr });
-      }
-
-      let parsed = {};
-      const output = stdout ? stdout.trim() : '';
-      try {
-        parsed = JSON.parse(output);
-      } catch (e) {
-        // try to extract JSON substring (handle warnings or extra logs before JSON)
-        const m = output.match(/\{[\s\S]*\}/);
-        if (m) {
-          try { parsed = JSON.parse(m[0]); } catch (e2) { parsed.predictedCrop = output; }
-        } else {
-          parsed.predictedCrop = output;
-        }
-      }
-
-      // if parsed.predictedCrop itself is an embedded JSON string, try to unwrap
-      if (parsed && typeof parsed.predictedCrop === 'string') {
-        const inner = parsed.predictedCrop.match(/\{[\s\S]*\}/);
-        if (inner) {
-          try {
-            const innerObj = JSON.parse(inner[0]);
-            if (innerObj && innerObj.predictedCrop) parsed.predictedCrop = innerObj.predictedCrop;
-          } catch (e) { /* ignore */ }
-        }
-      }
-
-      const finalCrop = parsed && parsed.predictedCrop ? String(parsed.predictedCrop) : String(parsed || '');
-
-      // ✅ SAVE TO DB (PredictionHistory) — save cleaned value
-      await PredictionHistory.create({
-        type: "CROP",
-        input: { temperature, humidity, rainfall, soil_ph, soilMoisture, nitrogen, phosphorus, potassium, soilType, region, season },
-        result: finalCrop
+    // ── Try persistent prediction server first (fast, no cold-start) ───────────
+    const tryPredictServer = () => new Promise((resolve, reject) => {
+      const http = require('http');
+      const body = JSON.stringify(payload);
+      const options = {
+        hostname: '127.0.0.1',
+        port: 5001,
+        path: '/predict-crop',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+        timeout: 5000,
+      };
+      const req2 = http.request(options, (response) => {
+        let data = '';
+        response.on('data', chunk => data += chunk);
+        response.on('end', () => {
+          try { resolve(JSON.parse(data)); }
+          catch (e) { reject(new Error('Invalid JSON from prediction server')); }
+        });
       });
-
-      res.json({ predictedCrop: finalCrop });
+      req2.on('error', reject);
+      req2.on('timeout', () => { req2.destroy(); reject(new Error('Prediction server timeout')); });
+      req2.write(body);
+      req2.end();
     });
+
+    // ── Fallback: spawn Python child process ───────────────────────────────────
+    const tryChildProcess = () => new Promise((resolve, reject) => {
+      const scriptPath = path.join(__dirname, "../../ml/predict.py");
+      const args = [
+        payload.temperature, payload.humidity, payload.rainfall,
+        payload.soil_ph ?? 'None', payload.soilMoisture ?? 'None',
+        payload.nitrogen ?? 'None', payload.phosphorus ?? 'None', payload.potassium ?? 'None',
+        payload.soilType, payload.region, payload.season
+      ];
+      const command = `"${pythonExec}" "${scriptPath}" ${args.map(a => JSON.stringify(a)).join(' ')}`;
+      exec(command, { timeout: 120000, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+        console.log('PREDICT-CROP STDOUT >>>', JSON.stringify(stdout));
+        console.log('PREDICT-CROP STDERR >>>', JSON.stringify(stderr));
+        if (error) return reject(new Error(error.message + (stderr ? ` | ${stderr}` : '')));
+        const output = stdout ? stdout.trim() : '';
+        let parsed = {};
+        try { parsed = JSON.parse(output); }
+        catch (e) {
+          const m = output.match(/\{[\s\S]*\}/);
+          if (m) { try { parsed = JSON.parse(m[0]); } catch (e2) { parsed.predictedCrop = output; } }
+          else { parsed.predictedCrop = output; }
+        }
+        resolve(parsed);
+      });
+    });
+
+    let predictedData = {};
+    try {
+      predictedData = await tryPredictServer();
+      console.log('PREDICT-CROP: used persistent prediction server');
+    } catch (serverErr) {
+      console.log('PREDICT-CROP: prediction server not available, falling back to child process:', serverErr.message);
+      predictedData = await tryChildProcess();
+    }
+
+    // Unwrap nested JSON if needed
+    if (predictedData && typeof predictedData.predictedCrop === 'string') {
+      const inner = predictedData.predictedCrop.match(/\{[\s\S]*\}/);
+      if (inner) {
+        try {
+          const innerObj = JSON.parse(inner[0]);
+          if (innerObj && innerObj.predictedCrop) predictedData.predictedCrop = innerObj.predictedCrop;
+        } catch (e) { /* ignore */ }
+      }
+    }
+
+    const finalCrop = predictedData && predictedData.predictedCrop
+      ? String(predictedData.predictedCrop)
+      : String(predictedData || '');
+
+    // ✅ SAVE TO DB
+    await PredictionHistory.create({
+      type: "CROP",
+      input: { temperature, humidity, rainfall, soil_ph, soilMoisture, nitrogen, phosphorus, potassium, soilType, region, season },
+      result: finalCrop
+    });
+
+    res.json({ predictedCrop: finalCrop });
   } catch (err) {
+    console.error('predict-crop fatal error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

@@ -133,16 +133,14 @@ export default function YieldPrediction() {
               {loading ? 'Predicting…' : 'Predict Yield'}
             </button>
 
-            {user?.role === 'admin' ? (
+            {user?.role === 'admin' && (
               <button type="button" className="btn" onClick={async () => {
                 setTrainLoading(true);
-                try { const r = await api.post('/yield/train'); alert('Training finished'); } catch(e) { alert('Training failed'); }
+                try { const r = await api.post('/yield/train'); alert('Training finished'); } catch (e) { alert('Training failed'); }
                 setTrainLoading(false);
               }} disabled={trainLoading}>
                 {trainLoading ? 'Training…' : 'Train model'}
               </button>
-            ) : (
-              <button type="button" className="btn" disabled title="Admin only">Train (admin)</button>
             )}
           </div>
         </form>
