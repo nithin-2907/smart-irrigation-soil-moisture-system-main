@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useAuth } from "../context/AuthContext";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function Chatbot() {
+  const { user } = useAuth();
   // 1. Declare state variables FIRST
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -14,6 +16,8 @@ export default function Chatbot() {
   const [sessionId] = useState(`session-${Date.now()}`);
   const [loading, setLoading] = useState(false);
   const [language, setLanguage] = useState("English");
+  const [contextData, setContextData] = useState({});
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const languages = [
     "English", "Hindi", "Spanish", "French", "Telugu",
@@ -31,7 +35,46 @@ export default function Chatbot() {
   // 4. Use effects (which depend on state/refs)
   useEffect(() => {
     scrollToBottom();
-  }, [messages, loading]);
+  }, [messages, loading, open]);
+
+  // Fetch history when Chatbot is opened for the first time
+  useEffect(() => {
+    if (open && user?.email && !historyLoaded) {
+      const fetchHistory = async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/chat/history/${encodeURIComponent(user.email)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.length > 0) {
+              const formattedHistory = data.map(msg => ({
+                sender: msg.role === 'user' ? 'user' : 'bot',
+                text: msg.content
+              }));
+              setMessages(formattedHistory);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to load chat history:", err);
+        } finally {
+          setHistoryLoaded(true);
+        }
+      };
+      fetchHistory();
+    }
+  }, [open, user?.email, historyLoaded]);
+
+  // Fetch contextual geolocation when Chatbot is accessed
+  useEffect(() => {
+    if (open && navigator.geolocation && !contextData.location) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setContextData(prev => ({ ...prev, location: `Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)}` }));
+        },
+        () => { console.warn("Geolocation blocked or unavailable for chatbot context"); }
+      );
+    }
+  }, [open, contextData.location]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -46,7 +89,13 @@ export default function Chatbot() {
       const response = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userText, sessionId, language }),
+        body: JSON.stringify({
+          message: userText,
+          sessionId,
+          language,
+          userEmail: user?.email,
+          context: contextData
+        }),
       });
 
       const data = await response.json();

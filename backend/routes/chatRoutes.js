@@ -7,10 +7,10 @@ const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 router.post('/', async (req, res) => {
     try {
-        const { message, sessionId, language } = req.body;
+        const { message, sessionId, language, userEmail, context } = req.body;
 
-        if (!message || !sessionId) {
-            return res.status(400).json({ error: 'Message and sessionId are required' });
+        if (!message || !userEmail) {
+            return res.status(400).json({ error: 'Message and userEmail are required' });
         }
 
         if (!process.env.GROQ_API_KEY) {
@@ -20,16 +20,17 @@ router.post('/', async (req, res) => {
 
         // 1. Save user message
         const userMessage = new Chat({
-            sessionId,
+            sessionId, // keeping for backwards compatibility
+            userEmail,
             role: 'user',
             content: message
         });
         await userMessage.save();
 
-        // 2. Fetch context (last 10 messages)
-        const history = await Chat.find({ sessionId })
+        // 2. Fetch context (last 20 messages for better history)
+        const history = await Chat.find({ userEmail })
             .sort({ timestamp: -1 })
-            .limit(10)
+            .limit(20)
             .lean(); // Convert to plain JS objects
 
         // Reverse to chronological order for the API
@@ -41,9 +42,17 @@ router.post('/', async (req, res) => {
         const targetLanguage = language || 'English';
 
         // Add system instruction if needed
+        let contextText = "";
+        if (context) {
+            contextText = `\nFARM CONTEXT (use this to provide personalized answers):\n`;
+            if (context.location) contextText += `- Location: ${context.location}\n`;
+            if (context.weather) contextText += `- Current Weather: ${context.weather.temp}°C, ${context.weather.condition}, ${context.weather.humidity}% humidity, ${context.weather.rain}mm rain\n`;
+            if (context.dashboard) contextText += `- Farm History: Avg Moisture ${context.dashboard.avgMoisture}%, Total Rain ${context.dashboard.totalRain}mm\n`;
+        }
+
         const systemMessage = {
             role: 'system',
-            content: `You are an intelligent agricultural assistant for the Smart Irrigation System. Your goal is to guide efficient use of water, help farmers with crop recommendations, weather-based advice, and soil management. Be concise and helpful. 
+            content: `You are an intelligent agricultural assistant for the Smart Irrigation System. Your goal is to guide efficient use of water, help farmers with crop recommendations, weather-based advice, and soil management. Be concise and helpful.${contextText}
 
 IMPORTANT: YOU MUST REPLY TO THE USER IN ${targetLanguage.toUpperCase()}. Do not provide answers in any other language.`
         };
@@ -72,6 +81,7 @@ IMPORTANT: YOU MUST REPLY TO THE USER IN ${targetLanguage.toUpperCase()}. Do not
         // 4. Save assistant response
         const botMessage = new Chat({
             sessionId,
+            userEmail,
             role: 'assistant',
             content: botContent
         });
@@ -88,10 +98,10 @@ IMPORTANT: YOU MUST REPLY TO THE USER IN ${targetLanguage.toUpperCase()}. Do not
     }
 });
 
-router.get('/history/:sessionId', async (req, res) => {
+router.get('/history/:userEmail', async (req, res) => {
     try {
-        const { sessionId } = req.params;
-        const history = await Chat.find({ sessionId }).sort({ timestamp: 1 });
+        const { userEmail } = req.params;
+        const history = await Chat.find({ userEmail }).sort({ timestamp: 1 });
         res.json(history);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch history' });
