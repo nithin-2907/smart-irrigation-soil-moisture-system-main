@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API = "http://localhost:5000/api/crop";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = `${API_BASE}/api/crop`;
 
 export const predictCrop = async (formData) => {
   const res = await axios.post(`${API}/predict`, formData);
@@ -9,7 +10,7 @@ export const predictCrop = async (formData) => {
 
 // ML-backed prediction (uses backend Python model)
 export const predictCropML = async ({ temperature, humidity, rainfall }) => {
-  const res = await axios.post(`http://localhost:5000/api/ml/predict-crop`, {
+  const res = await axios.post(`${API_BASE}/api/ml/predict-crop`, {
     temperature,
     humidity,
     rainfall

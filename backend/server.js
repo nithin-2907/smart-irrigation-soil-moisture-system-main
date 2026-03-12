@@ -9,7 +9,26 @@ const fs = require("fs");
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// Allow requests from Vercel frontend and local dev
+const allowedOrigins = [
+  process.env.FRONTEND_URL,       // e.g. https://your-app.vercel.app
+  "http://localhost:5173",
+  "http://localhost:3000",
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. Render health checks, curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
+
 app.use(express.json());
 
 // routes
@@ -55,8 +74,9 @@ mongoose
   })
   .catch((err) => console.log("❌ MongoDB error:", err));
 
-app.listen(5000, () => {
-  console.log("🚀 Server running on http://localhost:5000");
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
   const googleEnabled = !!process.env.GOOGLE_TRANSLATE_API_KEY;
   console.log(`🔤 Google Translate: ${googleEnabled ? "ENABLED" : "not configured"}`);
   const twilioEnabled = !!process.env.TWILIO_ACCOUNT_SID;

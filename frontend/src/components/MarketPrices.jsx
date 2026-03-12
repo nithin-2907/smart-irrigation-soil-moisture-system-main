@@ -1,6 +1,8 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export default function MarketPrices() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -19,7 +21,7 @@ export default function MarketPrices() {
         setLoading(true);
         setError("");
         try {
-            const response = await axios.get("http://localhost:5000/api/market", {
+            const response = await axios.get(`${API_BASE}/api/market`, {
                 params: {
                     state: filters.state,
                     district: filters.district,
