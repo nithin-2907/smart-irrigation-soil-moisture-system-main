@@ -12,9 +12,10 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const city = user?.location;
         const [statsRes, historyRes] = await Promise.all([
-          api.get('/dashboard/stats'),
-          api.get('/dashboard/history')
+          api.get('/dashboard/stats', { params: { city } }),
+          api.get('/dashboard/history', { params: { city } })
         ]);
         setStats(statsRes.data);
         setHistory(historyRes.data);
@@ -25,7 +26,7 @@ export default function Dashboard() {
       }
     };
     fetchData();
-  }, []);
+  }, [user?.location]);
 
   const name = user?.name || "Farmer";
 

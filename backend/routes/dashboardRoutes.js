@@ -9,9 +9,11 @@ router.get('/stats', async (req, res) => {
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-        const recentData = await WeatherData.find({
-            createdAt: { $gte: sevenDaysAgo }
-        }).sort({ createdAt: 1 });
+        const { city } = req.query;
+        const filter = { createdAt: { $gte: sevenDaysAgo } };
+        if (city) filter.city = city;
+
+        const recentData = await WeatherData.find(filter).sort({ createdAt: 1 });
 
         if (!recentData.length) {
             return res.json({
@@ -62,10 +64,12 @@ router.get('/history', async (req, res) => {
         windowStart.setDate(windowStart.getDate() - 13);
         windowStart.setHours(0, 0, 0, 0);
 
+        const { city } = req.query;
+        const filter = { createdAt: { $gte: windowStart, $lte: today } };
+        if (city) filter.city = city;
+
         // Fetch all records within the 14-day window
-        const rawData = await WeatherData.find({
-            createdAt: { $gte: windowStart, $lte: today }
-        }).sort({ createdAt: 1 });
+        const rawData = await WeatherData.find(filter).sort({ createdAt: 1 });
 
         // Build a map: "MMM D" -> { moisture[], rainfall[], temperature[], humidity[] }
         const dayBuckets = {};
