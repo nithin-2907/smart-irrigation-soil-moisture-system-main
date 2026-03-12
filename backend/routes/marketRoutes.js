@@ -33,23 +33,10 @@ router.get('/', async (req, res) => {
         res.json(response.data);
 
     } catch (error) {
-        console.warn('Market API Error (falling back to simulated data):', error.message);
-
-        // Generate simulated fallback data
-        const state = req.query.state || 'Andhra Pradesh';
-        const district = req.query.district || 'Chittoor';
-
-        const fallbackRecords = [
-            { state, district, market: 'Tirupati', commodity: 'Tomato', min_price: '2000', max_price: '2500', modal_price: '2200', arrival_date: new Date().toISOString().split('T')[0] },
-            { state, district, market: 'Tirupati', commodity: 'Onion', min_price: '1500', max_price: '1800', modal_price: '1650', arrival_date: new Date().toISOString().split('T')[0] },
-            { state, district, market: 'Madanapalle', commodity: 'Tomato', min_price: '2100', max_price: '2600', modal_price: '2300', arrival_date: new Date().toISOString().split('T')[0] },
-            { state, district, market: 'Chittoor (Town)', commodity: 'Mango', min_price: '4000', max_price: '5500', modal_price: '4800', arrival_date: new Date().toISOString().split('T')[0] },
-            { state, district, market: 'Chittoor (Town)', commodity: 'Green Chilli', min_price: '3000', max_price: '3500', modal_price: '3200', arrival_date: new Date().toISOString().split('T')[0] }
-        ];
-
-        res.json({
-            records: fallbackRecords,
-            note: "Simulated data: Government API is currently unreachable."
+        console.error('Market API Error:', error.response?.data || error.message);
+        res.status(500).json({
+            error: 'Failed to fetch market prices',
+            details: error.response?.data || error.message
         });
     }
 });
