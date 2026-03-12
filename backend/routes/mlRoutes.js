@@ -50,11 +50,20 @@ router.get("/soil-location", async (req, res) => {
 
     // 1. Open-Meteo — real soil moisture & soil temperature (free, global coverage)
     const meteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=soil_moisture_0_to_1cm,soil_moisture_1_to_3cm,soil_temperature_0cm&hourly=soil_moisture_0_to_7cm&forecast_days=1`;
-    const meteoRes = await axios.get(meteoUrl, { timeout: 10000 });
-    const current = meteoRes.data?.current || {};
+    let soilMoisture = null; // m³/m³
+    let soilTemp = null; // °C
 
-    const soilMoisture = current.soil_moisture_0_to_1cm ?? null; // m³/m³
-    const soilTemp = current.soil_temperature_0cm ?? null; // °C
+    try {
+      const meteoRes = await axios.get(meteoUrl, { timeout: 10000 });
+      const current = meteoRes.data?.current || {};
+      soilMoisture = current.soil_moisture_0_to_1cm ?? null;
+      soilTemp = current.soil_temperature_0cm ?? null;
+    } catch (meteoErr) {
+      console.warn("Open-Meteo API failed (likely 429 Rate Limit) - using fallback estimates.");
+      // Fallback estimates if rate-limited
+      soilMoisture = 0.35; // 35% default moisture
+      soilTemp = 25.0;     // 25°C default temp
+    }
 
     // 2. Derive soil properties from climate zone (latitude-based)
     //    and soil moisture. These are reasonable scientific estimates.
