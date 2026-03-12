@@ -8,6 +8,9 @@ const WeatherSchema = new mongoose.Schema({
   pressure: Number,
   soilMoisture: Number,
   city: String,
-}, { timestamps: true }); // ⭐ DO NOT REMOVE
+}, { timestamps: true });
+
+WeatherSchema.index({ city: 1, createdAt: -1 });
+WeatherSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("WeatherData", WeatherSchema);
