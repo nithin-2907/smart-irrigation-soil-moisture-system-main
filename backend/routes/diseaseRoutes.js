@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const { exec } = require('child_process');
 const fs = require('fs');
+const History = require('../models/History');
 
 // Configure Multer for image uploads
 const storage = multer.diskStorage({
@@ -67,6 +68,15 @@ router.post('/predict', upload.single('leafImage'), (req, res) => {
 
             try {
                 const result = JSON.parse(stdout.trim());
+
+                // Save to history
+                History.create({
+                    type: 'DISEASE',
+                    input: { image: req.file.originalname },
+                    result: result.disease,
+                    userEmail: req.body.userEmail
+                }).catch(err => console.error("History save error:", err));
+
                 res.json(result);
             } catch (e) {
                 console.error('JSON Parse Error:', e, stdout);

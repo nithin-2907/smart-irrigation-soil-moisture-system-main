@@ -16,6 +16,10 @@ const historySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    userEmail: {
+      type: String,
+      required: false,
+    },
   },
   {
     timestamps: true, // ✅ THIS FIXES DATE

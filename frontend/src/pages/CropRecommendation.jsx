@@ -128,7 +128,8 @@ export default function CropRecommendation() {
         potassium: form.potassium ? Number(form.potassium) : undefined,
         soilType: form.soilType || undefined,
         region: form.region || undefined,
-        season: form.season || undefined
+        season: form.season || undefined,
+        userEmail: user?.email
       };
       const res = await api.post('/ml/predict-crop', payload);
       setResult(res.data.predictedCrop + " 🌾");

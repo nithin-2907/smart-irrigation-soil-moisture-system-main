@@ -92,7 +92,7 @@ const SoilHealth = () => {
         ph: Number(soil.ph),
       };
 
-      const res = await api.post("/ml/predict-soil", payload);
+      const res = await api.post("/ml/predict-soil", { ...payload, userEmail: user?.email });
       const body = res.data;
 
       setPrediction({
@@ -126,7 +126,7 @@ const SoilHealth = () => {
   const loadHistory = async (page = historyPage, limit = historyLimit) => {
     setHistoryLoading(true);
     try {
-      const res = await api.get("/ml/soil-history", { params: { page, limit } });
+      const res = await api.get("/ml/soil-history", { params: { page, limit, email: user?.email } });
       const body = res.data || {};
       setSoilHistory(body.rows || []);
       setHistoryTotal(body.total || 0);

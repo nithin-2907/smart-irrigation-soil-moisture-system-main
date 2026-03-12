@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 export default function LeafDisease() {
+    const { user } = useAuth();
     const [selectedFile, setSelectedFile] = useState(null);
     const [preview, setPreview] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -27,6 +29,7 @@ export default function LeafDisease() {
 
         const formData = new FormData();
         formData.append('leafImage', selectedFile);
+        if (user?.email) formData.append('userEmail', user.email);
 
         try {
             const res = await api.post('/disease/predict', formData, {

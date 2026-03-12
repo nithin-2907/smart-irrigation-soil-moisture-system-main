@@ -273,7 +273,8 @@ router.post("/predict-crop", async (req, res) => {
       potassium,
       soilType,
       region,
-      season
+      season,
+      userEmail // capture userEmail
     } = req.body;
 
     if (temperature === undefined || humidity === undefined || rainfall === undefined) {
@@ -374,7 +375,8 @@ router.post("/predict-crop", async (req, res) => {
     await PredictionHistory.create({
       type: "CROP",
       input: { temperature, humidity, rainfall, soil_ph, soilMoisture, nitrogen, phosphorus, potassium, soilType, region, season },
-      result: finalCrop
+      result: finalCrop,
+      userEmail
     });
 
     res.json({ predictedCrop: finalCrop });
@@ -469,7 +471,7 @@ router.post('/train-soil', async (req, res) => {
 // POST → predict soil health (stores prediction in DB)
 router.post('/predict-soil', async (req, res) => {
   try {
-    const { nitrogen, phosphorus, potassium, ph } = req.body;
+    const { nitrogen, phosphorus, potassium, ph, userEmail } = req.body;
     if ([nitrogen, phosphorus, potassium, ph].some(v => v === undefined || v === null)) {
       return res.status(400).json({ error: 'nitrogen, phosphorus, potassium and ph are required' });
     }
@@ -542,8 +544,17 @@ router.post('/predict-soil', async (req, res) => {
       potassium: Number(potassium),
       ph: Number(ph),
       predictedLabel: parsed.predicted_label || String(parsed.predicted_label),
-      probability: parsed.probability || null
+      probability: parsed.probability || null,
+      userEmail: String(userEmail || '')
     });
+
+    const History = require('../models/History');
+    await History.create({
+      type: 'SOIL',
+      input: { nitrogen, phosphorus, potassium, ph },
+      result: doc.predictedLabel,
+      userEmail: String(userEmail || '')
+    }).catch(err => console.error("History save err:", err));
 
     // suggestion logic (simple rules)
     const suggestionMap = {
@@ -599,9 +610,12 @@ router.get('/soil-history', async (req, res) => {
     const limit = Math.max(1, Math.min(500, parseInt(req.query.limit || '20', 10)));
     const skip = (page - 1) * limit;
 
+    const { email } = req.query;
+    const filter = email ? { userEmail: email } : {};
+
     const [rows, total] = await Promise.all([
-      SoilPrediction.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-      SoilPrediction.countDocuments()
+      SoilPrediction.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      SoilPrediction.countDocuments(filter)
     ]);
 
     res.json({ rows, total, page, limit });

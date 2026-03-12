@@ -1,15 +1,19 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
 export default function History() {
 
+  const { user } = useAuth();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await api.get('/history');
+        const res = await api.get('/history', {
+          params: { email: user?.email }
+        });
         setHistory(res.data);
       } catch (err) {
         console.error("Failed to fetch history", err);
@@ -17,8 +21,12 @@ export default function History() {
         setLoading(false);
       }
     };
-    fetchHistory();
-  }, []);
+    if (user?.email) {
+      fetchHistory();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
   // Helper to format result based on type
   const formatResult = (item) => {

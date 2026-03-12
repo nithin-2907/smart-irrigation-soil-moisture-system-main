@@ -32,7 +32,7 @@ export default function YieldPrediction() {
   const loadHistory = async (p = page, l = limit) => {
     setHistoryLoading(true);
     try {
-      const res = await api.get('/yield/history', { params: { page: p, limit: l } });
+      const res = await api.get('/yield/history', { params: { page: p, limit: l, email: user?.email } });
       setHistory(res.data.rows || []);
       setTotal(res.data.total || 0);
       setPage(res.data.page || p);
@@ -58,7 +58,8 @@ export default function YieldPrediction() {
         rainfall: Number(form.rainfall),
         temperature: Number(form.temperature),
         crop: form.crop,
-        fertilizer: Number(form.fertilizer || 0)
+        fertilizer: Number(form.fertilizer || 0),
+        userEmail: user?.email
       };
 
       const res = await api.post('/yield/predict', payload);

@@ -6,7 +6,8 @@ const soilPredictionSchema = new mongoose.Schema({
   potassium: Number,
   ph: Number,
   predictedLabel: String,
-  probability: Number
+  probability: Number,
+  userEmail: String
 }, { timestamps: true });
 
 module.exports = mongoose.model('SoilPrediction', soilPredictionSchema);

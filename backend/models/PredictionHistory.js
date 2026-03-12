@@ -13,6 +13,10 @@ const predictionHistorySchema = new mongoose.Schema(
     result: {
       type: String,
       required: true
+    },
+    userEmail: {
+      type: String,
+      required: false
     }
   },
   { timestamps: true }

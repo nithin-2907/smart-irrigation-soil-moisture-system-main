@@ -6,10 +6,13 @@ const PredictionHistory = require("../models/PredictionHistory");
 
 router.get("/", async (req, res) => {
   try {
+    const { email } = req.query;
+    const filter = email ? { userEmail: email } : {};
+
     // optimize: run in parallel
     const [historyDocs, predictionDocs] = await Promise.all([
-      History.find().sort({ createdAt: -1 }).limit(50).lean(),
-      PredictionHistory.find().sort({ createdAt: -1 }).limit(50).lean()
+      History.find(filter).sort({ createdAt: -1 }).limit(50).lean(),
+      PredictionHistory.find(filter).sort({ createdAt: -1 }).limit(50).lean()
     ]);
 
     // Merge and sort by date descending

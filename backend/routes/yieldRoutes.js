@@ -74,7 +74,8 @@ router.post('/predict', async (req, res) => {
         rainfall: Number(rainfall),
         temperature: Number(temperature),
         fertilizer: Number(fertilizer || 0),
-        predictedYield: predicted
+        predictedYield: predicted,
+        userEmail: String(req.body.userEmail || '')
       });
 
       const db = mongoose.connection.db;
@@ -94,9 +95,12 @@ router.get('/history', async (req, res) => {
     const limit = Math.max(1, Math.min(500, parseInt(req.query.limit || '20', 10)));
     const skip = (page - 1) * limit;
 
+    const { email } = req.query;
+    const filter = email ? { userEmail: email } : {};
+
     const [rows, total] = await Promise.all([
-      YieldPrediction.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-      YieldPrediction.countDocuments()
+      YieldPrediction.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      YieldPrediction.countDocuments(filter)
     ]);
 
     res.json({ rows, total, page, limit });

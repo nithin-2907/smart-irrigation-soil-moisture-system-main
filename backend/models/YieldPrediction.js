@@ -8,6 +8,7 @@ const yieldSchema = new mongoose.Schema(
     temperature: Number,
     fertilizer: Number,
     predictedYield: Number,
+    userEmail: String,
   },
   { timestamps: true }
 );
