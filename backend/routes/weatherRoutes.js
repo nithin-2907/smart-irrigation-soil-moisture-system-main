@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const pythonExec = (function () {
   const venvPython = path.join(__dirname, '..', '..', '.venv', 'Scripts', 'python.exe');
-  return fs.existsSync(venvPython) ? venvPython : 'python';
+  return fs.existsSync(venvPython) ? venvPython : (process.platform === 'win32' ? 'python' : 'python3');
 })();
 const router = express.Router();
 const WeatherData = require("../models/WeatherData");

@@ -6,9 +6,9 @@ const { exec } = require('child_process');
 const mongoose = require('mongoose');
 
 // prefer project virtualenv if present, otherwise fall back to system `python`
-const pythonExec = (function() {
+const pythonExec = (function () {
   const venvPython = path.join(__dirname, '..', '..', '.venv', 'Scripts', 'python.exe');
-  return fs.existsSync(venvPython) ? venvPython : 'python';
+  return fs.existsSync(venvPython) ? venvPython : (process.platform === 'win32' ? 'python' : 'python3');
 })();
 
 const YieldPrediction = require('../models/YieldPrediction');

@@ -7,7 +7,7 @@ const fs = require('fs');
 const pythonExec = (function () {
   // prefer project virtualenv if present, otherwise fall back to system `python`
   const venvPython = path.join(__dirname, '..', '..', '.venv', 'Scripts', 'python.exe');
-  return fs.existsSync(venvPython) ? venvPython : 'python';
+  return fs.existsSync(venvPython) ? venvPython : (process.platform === 'win32' ? 'python' : 'python3');
 })();
 
 // single-flight promise used to avoid concurrent background trainings

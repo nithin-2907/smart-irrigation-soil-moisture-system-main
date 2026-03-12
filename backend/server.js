@@ -84,7 +84,7 @@ app.listen(PORT, () => {
 
   // ── Auto-start Python prediction server (loads model once, fast for all subsequent requests) ───
   const venvPython = path.join(__dirname, '..', '.venv', 'Scripts', 'python.exe');
-  const pythonBin = fs.existsSync(venvPython) ? venvPython : 'python';
+  const pythonBin = fs.existsSync(venvPython) ? venvPython : (process.platform === 'win32' ? 'python' : 'python3');
   const predictServerScript = path.join(__dirname, '..', 'ml', 'predict_server.py');
 
   if (fs.existsSync(predictServerScript)) {
