@@ -6,6 +6,7 @@ export default function YieldPrediction() {
   const { user } = useAuth();
 
   const [form, setForm] = useState({
+    city: "",
     area: "",
     rainfall: "",
     temperature: "",
@@ -24,6 +25,29 @@ export default function YieldPrediction() {
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [autoFillLoading, setAutoFillLoading] = useState(false);
+
+  // Fallback dictionary for approximate annual rainfall (in mm)
+  const ANNUAL_RAINFALL_MAP = {
+    "coimbatore": 600,
+    "chennai": 1400,
+    "bangalore": 900,
+    "mumbai": 2200,
+    "delhi": 700,
+    "kolkata": 1600,
+    "pune": 700,
+    "hyderabad": 800,
+    "ahmedabad": 800,
+    "kochi": 3000,
+    "jaipur": 600,
+    "lucknow": 1000,
+    "bhopal": 1100,
+    "patna": 1200,
+    "trivandrum": 1800,
+    "guwahati": 1600,
+    "chandigarh": 1000,
+    "surat": 1200
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -45,6 +69,44 @@ export default function YieldPrediction() {
   };
 
   useEffect(() => { loadHistory(); }, [page, limit]);
+
+  const handleAutoFill = async () => {
+    if (!form.city) {
+      setError("Please enter a City name to auto-fill weather data.");
+      return;
+    }
+    
+    setAutoFillLoading(true);
+    setError("");
+
+    try {
+      // 1. Fetch current live temperature using the existing weather API endpoint
+      const res = await api.get('/weather/collect', { params: { city: form.city } });
+      const currentTemp = Math.round(res.data.weather.temperature);
+
+      // 2. Fetch approximate annual rainfall from the fallback dictionary
+      const normalizedCity = form.city.toLowerCase().trim();
+      let annualRainfall = ANNUAL_RAINFALL_MAP[normalizedCity] || "";
+
+      // 3. Update the form
+      setForm((prev) => ({
+        ...prev,
+        temperature: currentTemp,
+        // Only update rainfall automatically if we found it in our dictionary
+        ...(annualRainfall ? { rainfall: annualRainfall } : {})
+      }));
+
+      if (!annualRainfall) {
+        alert(`Fetched temperature: ${currentTemp}°C. \nWe don't have historical annual rainfall data for "${form.city}". Please enter the expected seasonal rainfall manually.`);
+      }
+
+    } catch (err) {
+      console.error(err);
+      setError("Could not fetch weather data. Please check the city name or try again later.");
+    } finally {
+      setAutoFillLoading(false);
+    }
+  };
 
   const handlePredict = async (e) => {
     e.preventDefault();
@@ -81,6 +143,27 @@ export default function YieldPrediction() {
       {/* Form Card */}
       <div className="card form-card">
         <h3>Enter Farm Data</h3>
+
+        {/* Auto-Fill Section */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', alignItems: 'center' }}>
+          <input
+            type="text"
+            name="city"
+            placeholder="City (e.g. Coimbatore)"
+            value={form.city}
+            onChange={handleChange}
+            style={{ flex: 1, marginBottom: 0 }}
+          />
+          <button 
+            type="button" 
+            className="btn" 
+            onClick={handleAutoFill} 
+            disabled={autoFillLoading}
+            style={{ whiteSpace: 'nowrap' }}
+          >
+            {autoFillLoading ? 'Fetching...' : '☁️ Auto-Fill Weather'}
+          </button>
+        </div>
 
         <form onSubmit={handlePredict} className="form-grid">
 
