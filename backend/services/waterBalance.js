@@ -12,9 +12,11 @@
  */
 
 const axios = require("axios");
+const WeatherData = require("../models/WeatherData");
 
 const OWM_KEY = process.env.OPENWEATHER_API_KEY;
 
+// ... (CROP_KC and SOIL_WHC remain same)
 // ── FAO Crop Coefficients (Kc) per growth stage ───────────────────────────────
 // Source: FAO Irrigation and Drainage Paper 56
 const CROP_KC = {
@@ -47,14 +49,6 @@ const SOIL_WHC = {
 /**
  * Calculate ET₀ using FAO Penman-Monteith simplified (Hargreaves-Samani variant)
  * that only needs Tmax, Tmin, and latitude (solar radiation is estimated).
- *
- * For full PM eq we'd need wind speed & solar radiation measured on-site.
- * Hargreaves-Samani is recommended by FAO when only temperature is available.
- *
- * @param {number} Tmax   - Max temp °C
- * @param {number} Tmin   - Min temp °C
- * @param {number} Ra     - Extraterrestrial radiation (MJ/m²/day) — from lat/doy
- * @returns {number}      - ET₀ in mm/day
  */
 function hargreavesET0(Tmax, Tmin, Ra) {
     const Tmean = (Tmax + Tmin) / 2;
@@ -65,7 +59,6 @@ function hargreavesET0(Tmax, Tmin, Ra) {
 
 /**
  * Estimate extraterrestrial radiation Ra (MJ/m²/day)
- * from latitude and day of year.
  */
 function getExtraterrestrialRadiation(latDeg, doy) {
     const pi = Math.PI;
@@ -121,6 +114,7 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
 
     const Ra = getExtraterrestrialRadiation(lat, doy);
     const whc = SOIL_WHC[soilType?.toLowerCase()] || SOIL_WHC.default;
+    const fieldCapacity = whc * rootDepth;
 
     // Group 5-day forecast into daily Tmax/Tmin/rain buckets
     const dailyMap = {};
@@ -131,10 +125,22 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
         dailyMap[date].rain += item.rain?.["3h"] || 0;
     }
 
-    const days = [];
-    let soilMoisture = whc * rootDepth * 0.65;  // Start at 65% field capacity
+    // ── ACCURACY UPGRADE 1: Ground in real-world moisture ────────────────────────
+    let soilMoisturePercent = 65; // default fallback
+    try {
+        const latestInfo = await WeatherData.findOne({ city: new RegExp(`^${location}$`, 'i') }).sort({ createdAt: -1 });
+        if (latestInfo && latestInfo.soilMoisture !== undefined) {
+            soilMoisturePercent = latestInfo.soilMoisture;
+        }
+    } catch (e) {
+        console.warn("Could not find latest soil data, using default 65%");
+    }
 
+    let soilMoisture = (soilMoisturePercent / 100) * fieldCapacity;
+
+    const days = [];
     const dateKeys = Object.keys(dailyMap).slice(0, 7);
+
     for (let i = 0; i < dateKeys.length; i++) {
         const date = dateKeys[i];
         const d = dailyMap[date];
@@ -146,13 +152,18 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
         const Kc = getKc(crop, daysSincePlanting + i);
         const ETc = ET0 * Kc;
 
-        // Water balance: soil moisture = prev + rain - ETc
-        soilMoisture = Math.max(0, soilMoisture + dayRain - ETc);
+        // ACCURACY UPGRADE 2: Simulate Runoff (Clamping)
+        // Soil cannot hold more than Field Capacity. Excess rain is runoff.
+        soilMoisture = Math.min(fieldCapacity, Math.max(0, soilMoisture + dayRain - ETc));
 
-        const fieldCapacity = whc * rootDepth;
         const MAD = fieldCapacity * 0.45;  // Management Allowed Depletion (45%)
         const deficit = Math.max(0, fieldCapacity - soilMoisture);
-        const needsIrrigation = soilMoisture < MAD;
+        
+        // ACCURACY UPGRADE 3: Smarter Logic
+        // Skip if rain is enough to refill above threshold OR is very significant
+        const skipDueToRain = dayRain > 5 && (soilMoisture + dayRain) > MAD;
+        const needsIrrigation = soilMoisture < MAD && !skipDueToRain;
+        
         const irrigationMm = needsIrrigation ? Math.round(deficit * 10) / 10 : 0;
         
         // Calculate the percentage based on the actual soil moisture BEFORE we refill it.
@@ -172,9 +183,11 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
             needsIrrigation,
             action: needsIrrigation
                 ? `💧 Irrigate ${irrigationMm}mm`
-                : dayRain > 2
-                    ? `🌧️ Rain received — skip`
-                    : `✅ Sufficient moisture`,
+                : dayRain > 10
+                    ? `🌧️ Rain expected (${Math.round(dayRain)}mm) — skip`
+                    : moisturePct > 90
+                        ? `✅ Sufficient (Soil at ${moisturePct}%)`
+                        : `✅ Sufficient moisture`,
         });
     }
 
@@ -185,7 +198,7 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
         daysSincePlanting,
         currentGrowthStage: getGrowthStage(crop, daysSincePlanting),
         schedule: days,
-        totalIrrigationNeeded: days.reduce((s, d) => s + d.irrigationMm, 0),
+        totalIrrigationNeeded: Math.round(days.reduce((s, d) => s + d.irrigationMm, 0) * 10) / 10,
         waterSavedVsFlood: estimateFloodWaste(days),
     };
 }
@@ -200,10 +213,10 @@ function getGrowthStage(crop, days) {
 }
 
 function estimateFloodWaste(days) {
-    // Traditional flood irrigation uses ~8mm/day regardless of need
     const floodTotal = days.length * 8;
     const smartTotal = days.reduce((s, d) => s + d.irrigationMm, 0);
     return Math.max(0, Math.round(floodTotal - smartTotal));
 }
 
 module.exports = { computeIrrigationSchedule, hargreavesET0, getKc, getGrowthStage };
+
