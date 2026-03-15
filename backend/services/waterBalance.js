@@ -154,11 +154,12 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
         const deficit = Math.max(0, fieldCapacity - soilMoisture);
         const needsIrrigation = soilMoisture < MAD;
         const irrigationMm = needsIrrigation ? Math.round(deficit * 10) / 10 : 0;
+        
+        // Calculate the percentage based on the actual soil moisture BEFORE we refill it.
+        const moisturePct = Math.min(100, Math.round((soilMoisture / fieldCapacity) * 100));
 
         // Apply irrigation (refill to field capacity)
         if (needsIrrigation) soilMoisture = fieldCapacity;
-
-        const moisturePct = Math.min(100, Math.round((soilMoisture / fieldCapacity) * 100));
 
         days.push({
             date,
