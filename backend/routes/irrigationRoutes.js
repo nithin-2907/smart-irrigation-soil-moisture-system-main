@@ -21,6 +21,7 @@ router.get("/schedule", async (req, res) => {
             crop: crop.toLowerCase(),
             plantingDate: plantingDate || null,
             soilType: soilType || "loamy",
+            fieldSize: fieldSize ? parseFloat(fieldSize) : 0,
             rootDepth: rootDepth ? parseFloat(rootDepth) : 0.5,
         });
         res.json(result);

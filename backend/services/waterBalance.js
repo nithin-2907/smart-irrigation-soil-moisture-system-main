@@ -46,6 +46,29 @@ const SOIL_WHC = {
     default: 160,
 };
 
+// ── Irrigation Method Suggestions ───────────────────────────────────────────
+// Logic based on crop water requirements and soil drainage
+function suggestIrrigationMethod(crop, soilType) {
+    const c = crop.toLowerCase();
+    const s = soilType?.toLowerCase() || "loamy";
+
+    // Rice and Jute are traditionally flood-irrigated (surface)
+    if (c === "rice" || c === "jute") return "Surface (Flood) Irrigation";
+
+    // High value/density crops or sandy soil benefit most from Drip
+    if (["tomato", "banana", "coffee", "potato", "onion", "chickpea", "mungbean"].includes(c) || s === "sandy") {
+        return "Drip Irrigation";
+    }
+
+    // Cereals and loamy soils work well with Sprinklers
+    if (["wheat", "maize", "cotton", "sugarcane"].includes(c)) {
+        if (s === "clay") return "Drip Irrigation"; // Clay needs slower infiltration
+        return "Sprinkler Irrigation";
+    }
+
+    return "Drip Irrigation"; // Default to most efficient
+}
+
 /**
  * Calculate ET₀ using FAO Penman-Monteith simplified (Hargreaves-Samani variant)
  * that only needs Tmax, Tmin, and latitude (solar radiation is estimated).
@@ -101,7 +124,7 @@ function getKc(crop, daysSincePlanting) {
  * Main function: given a location + crop + planting date + soil type,
  * compute a 7-day irrigation schedule.
  */
-async function computeIrrigationSchedule({ location, crop, plantingDate, soilType, rootDepth = 0.5 }) {
+async function computeIrrigationSchedule({ location, crop, plantingDate, soilType, fieldSize = 0, rootDepth = 0.5 }) {
     const { current, forecast } = await fetchWeather(location);
 
     const lat = current.coord.lat;
@@ -165,7 +188,8 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
         const needsIrrigation = soilMoisture < MAD && !skipDueToRain;
         
         const irrigationMm = needsIrrigation ? Math.round(deficit * 10) / 10 : 0;
-        
+        const volumeLiters = fieldSize > 0 ? Math.round(irrigationMm * fieldSize) : 0;
+
         // Calculate the percentage based on the actual soil moisture BEFORE we refill it.
         const moisturePct = Math.min(100, Math.round((soilMoisture / fieldCapacity) * 100));
 
@@ -180,9 +204,11 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
             rainfall: Math.round(dayRain * 10) / 10,
             soilMoisture: moisturePct,
             irrigationMm,
+            volumeLiters,
+            suggestedMethod: suggestIrrigationMethod(crop, soilType),
             needsIrrigation,
             action: needsIrrigation
-                ? `💧 Irrigate ${irrigationMm}mm`
+                ? `💧 Irrigate ${irrigationMm}mm ${volumeLiters > 0 ? `(${volumeLiters}L)` : ""}`
                 : dayRain > 10
                     ? `🌧️ Rain expected (${Math.round(dayRain)}mm) — skip`
                     : moisturePct > 90
@@ -191,14 +217,20 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
         });
     }
 
+    const totalIrrigationMm = Math.round(days.reduce((s, d) => s + d.irrigationMm, 0) * 10) / 10;
+    const totalVolumeLiters = fieldSize > 0 ? Math.round(totalIrrigationMm * fieldSize) : 0;
+
     return {
         location,
         crop,
         soilType,
+        fieldSize,
         daysSincePlanting,
         currentGrowthStage: getGrowthStage(crop, daysSincePlanting),
         schedule: days,
-        totalIrrigationNeeded: Math.round(days.reduce((s, d) => s + d.irrigationMm, 0) * 10) / 10,
+        totalIrrigationNeeded: totalIrrigationMm,
+        totalVolumeLiters,
+        suggestedIrrigationType: suggestIrrigationMethod(crop, soilType),
         waterSavedVsFlood: estimateFloodWaste(days),
     };
 }

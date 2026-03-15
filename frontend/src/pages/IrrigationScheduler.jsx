@@ -9,7 +9,7 @@ const STAGE_COLOR = { "Initial": "#22c55e", "Mid-season": "#f59e0b", "Late": "#f
 
 export default function IrrigationScheduler() {
     const { user } = useAuth();
-    const [form, setForm] = useState({ location: "", crop: "rice", plantingDate: "", soilType: "loamy" });
+    const [form, setForm] = useState({ location: "", crop: "rice", plantingDate: "", soilType: "loamy", fieldSize: "100" });
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -66,6 +66,11 @@ export default function IrrigationScheduler() {
                                 {SOILS.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                             </select>
                         </div>
+                        <div className="form-group">
+                            <label>📏 Field Size (m²)</label>
+                            <input type="number" placeholder="e.g. 500"
+                                value={form.fieldSize} onChange={e => setForm(f => ({ ...f, fieldSize: e.target.value }))} />
+                        </div>
                     </div>
                     {error && <p className="msg error" style={{ marginTop: 8 }}>{error}</p>}
                     <button type="submit" className="primary-btn" disabled={loading} style={{ marginTop: 16 }}>
@@ -89,8 +94,22 @@ export default function IrrigationScheduler() {
                             </div>
                         </div>
                         <div className="dashboard-card card-rain">
-                            <div className="card-title">💧 Total Irrigation Needed</div>
-                            <div className="card-value">{result.totalIrrigationNeeded} <span style={{ fontSize: 14 }}>mm / 7 days</span></div>
+                            <div className="card-title">💧 Total Water Needed</div>
+                            <div className="card-value">{result.totalIrrigationNeeded} <span style={{ fontSize: 14 }}>mm</span></div>
+                            {result.totalVolumeLiters > 0 && (
+                                <div style={{ fontSize: 20, color: "#3b82f6", fontWeight: 700, marginTop: 8 }}>
+                                    {result.totalVolumeLiters.toLocaleString()} <span style={{ fontSize: 14 }}>Liters</span>
+                                </div>
+                            )}
+                        </div>
+                        <div className="dashboard-card card-temp">
+                            <div className="card-title">🚜 Suggested Irrigation</div>
+                            <div className="card-value" style={{ fontSize: 20, color: "#6366f1" }}>
+                                {result.suggestedIrrigationType}
+                            </div>
+                            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
+                                Optimized for {result.soilType} soil & {result.crop}
+                            </div>
                         </div>
                         <div className="dashboard-card card-humidity">
                             <div className="card-title">💰 Water Saved vs Flood</div>
@@ -115,7 +134,7 @@ export default function IrrigationScheduler() {
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                                 <thead>
                                     <tr style={{ background: "var(--table-header-bg)", borderBottom: "2px solid var(--border-color)" }}>
-                                        {["Date", "ET₀ (mm)", "ETc (mm)", "Kc", "Rainfall", "Soil Moisture", "Action"].map(h => (
+                                        {["Date", "ET₀ (mm)", "ETc (mm)", "Rainfall", "Soil Moisture", "Water Volume", "Action"].map(h => (
                                             <th key={h} style={{ padding: "10px 12px", textAlign: "left", color: "var(--text-primary)", fontWeight: 600 }}>{h}</th>
                                         ))}
                                     </tr>
@@ -129,7 +148,6 @@ export default function IrrigationScheduler() {
                                             <td style={{ padding: "10px 12px", fontWeight: 600 }}>{day.date}</td>
                                             <td style={{ padding: "10px 12px" }}>{day.ET0}</td>
                                             <td style={{ padding: "10px 12px" }}>{day.ETc}</td>
-                                            <td style={{ padding: "10px 12px", color: "#6366f1" }}>{day.Kc}</td>
                                             <td style={{ padding: "10px 12px", color: "#3b82f6" }}>{day.rainfall} mm</td>
                                             <td style={{ padding: "10px 12px" }}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -147,6 +165,9 @@ export default function IrrigationScheduler() {
                                                         {day.soilMoisture}%
                                                     </span>
                                                 </div>
+                                            </td>
+                                            <td style={{ padding: "10px 12px", fontWeight: 600, color: "#3b82f6" }}>
+                                                {day.volumeLiters > 0 ? `${day.volumeLiters.toLocaleString()} L` : "-"}
                                             </td>
                                             <td style={{
                                                 padding: "10px 12px", fontWeight: 600,
