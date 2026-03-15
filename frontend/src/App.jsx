@@ -53,6 +53,7 @@ function AppLayout() {
 
         </Routes>
       </div>
+      {!isLogin && <Chatbot />}
     </div>
   );
 }
@@ -62,7 +63,6 @@ function App() {
     <ThemeProvider>
       <Router>
         <AppLayout />
-        <Chatbot />
       </Router>
     </ThemeProvider>
   );
