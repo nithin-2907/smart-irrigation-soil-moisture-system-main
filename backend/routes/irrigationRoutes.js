@@ -9,7 +9,7 @@ const { computeIrrigationSchedule, getGrowthStage } = require("../services/water
  * Returns a 7-day FAO-56 water balance irrigation schedule.
  */
 router.get("/schedule", async (req, res) => {
-    const { location, crop, plantingDate, soilType, rootDepth } = req.query;
+    const { location, crop, plantingDate, soilType, fieldSize, rootDepth } = req.query;
 
     if (!location || !crop) {
         return res.status(400).json({ error: "location and crop are required" });

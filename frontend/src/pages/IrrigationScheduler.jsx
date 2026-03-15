@@ -105,7 +105,7 @@ export default function IrrigationScheduler() {
                         <div className="dashboard-card card-temp">
                             <div className="card-title">🚜 Suggested Irrigation</div>
                             <div className="card-value" style={{ fontSize: 20, color: "#6366f1" }}>
-                                {result.suggestedIrrigationType}
+                                {result.suggestedIrrigationType || "Drip Irrigation"}
                             </div>
                             <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
                                 Optimized for {result.soilType} soil & {result.crop}
@@ -167,7 +167,7 @@ export default function IrrigationScheduler() {
                                                 </div>
                                             </td>
                                             <td style={{ padding: "10px 12px", fontWeight: 600, color: "#3b82f6" }}>
-                                                {day.volumeLiters > 0 ? `${day.volumeLiters.toLocaleString()} L` : "-"}
+                                                {day.volumeLiters && day.volumeLiters > 0 ? `${day.volumeLiters.toLocaleString()} L` : "-"}
                                             </td>
                                             <td style={{
                                                 padding: "10px 12px", fontWeight: 600,
