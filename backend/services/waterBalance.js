@@ -176,6 +176,11 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
         const Kc = getKc(crop, daysSincePlanting + i);
         const ETc = ET0 * Kc;
 
+        // NEW LOGIC: Daily Replenishment Requirement
+        // Replenish exactly what was lost (ETc) minus any natural rain
+        const dailyReqMm = Math.max(0, ETc - dayRain);
+        const dailyReqLiters = fieldSize > 0 ? Math.round(dailyReqMm * fieldSize) : 0;
+
         // ACCURACY UPGRADE 2: Simulate Runoff (Clamping)
         // Soil cannot hold more than Field Capacity. Excess rain is runoff.
         soilMoisture = Math.min(fieldCapacity, Math.max(0, soilMoisture + dayRain - ETc));
@@ -205,22 +210,27 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
             Kc: Math.round(Kc * 100) / 100,
             rainfall: Math.round(dayRain * 10) / 10,
             soilMoisture: moisturePct,
+            dailyReqMm: Math.round(dailyReqMm * 10) / 10,
+            dailyReqLiters,
             irrigationMm,
             volumeLiters,
             suggestedMethod: suggestIrrigationMethod(crop, soilType),
             needsIrrigation,
             action: needsIrrigation
-                ? `💧 Irrigate ${irrigationMm}mm ${volumeLiters > 0 ? `(${volumeLiters}L)` : ""}`
-                : dayRain > 10
-                    ? `🌧️ Rain expected (${Math.round(dayRain)}mm) — skip`
-                    : moisturePct > 90
-                        ? `✅ Sufficient (Soil at ${moisturePct}%)`
-                        : `✅ Sufficient moisture`,
+                ? `💧 Critical: Irrigate ${irrigationMm}mm (${volumeLiters}L)`
+                : dailyReqLiters > 0
+                    ? `🌿 Replenish ${dailyReqLiters}L (Daily ET loss)`
+                    : dayRain > 10
+                        ? `🌧️ Rain expected (${Math.round(dayRain)}mm) — skip`
+                        : moisturePct > 90
+                            ? `✅ Sufficient (Soil at ${moisturePct}%)`
+                            : `✅ Sufficient moisture`,
         });
     }
 
     const totalIrrigationMm = Math.round(days.reduce((s, d) => s + d.irrigationMm, 0) * 10) / 10;
     const totalVolumeLiters = fieldSize > 0 ? Math.round(totalIrrigationMm * fieldSize) : 0;
+    const totalETReplenishmentLiters = days.reduce((s, d) => s + d.dailyReqLiters, 0);
 
     return {
         location,
@@ -232,6 +242,7 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
         schedule: days,
         totalIrrigationNeeded: totalIrrigationMm,
         totalVolumeLiters,
+        totalETReplenishmentLiters,
         suggestedIrrigationType: suggestIrrigationMethod(crop, soilType),
         waterSavedVsFlood: estimateFloodWaste(days),
     };
