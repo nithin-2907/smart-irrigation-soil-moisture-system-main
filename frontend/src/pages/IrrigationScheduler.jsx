@@ -96,11 +96,9 @@ export default function IrrigationScheduler() {
                         <div className="dashboard-card card-rain">
                             <div className="card-title">💧 Total Water Needed</div>
                             <div className="card-value">{result.totalIrrigationNeeded} <span style={{ fontSize: 14 }}>mm</span></div>
-                            {result.totalVolumeLiters > 0 && (
-                                <div style={{ fontSize: 20, color: "#3b82f6", fontWeight: 700, marginTop: 8 }}>
-                                    {result.totalVolumeLiters.toLocaleString()} <span style={{ fontSize: 14 }}>Liters</span>
-                                </div>
-                            )}
+                            <div style={{ fontSize: 20, color: "#3b82f6", fontWeight: 700, marginTop: 8 }}>
+                                {result.totalVolumeLiters ? result.totalVolumeLiters.toLocaleString() : "0"} <span style={{ fontSize: 14 }}>Liters</span>
+                            </div>
                         </div>
                         <div className="dashboard-card card-temp">
                             <div className="card-title">🚜 Suggested Irrigation</div>
@@ -134,7 +132,7 @@ export default function IrrigationScheduler() {
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                                 <thead>
                                     <tr style={{ background: "var(--table-header-bg)", borderBottom: "2px solid var(--border-color)" }}>
-                                        {["Date", "ET₀ (mm)", "ETc (mm)", "Rainfall", "Soil Moisture", "Water Volume", "Action"].map(h => (
+                                        {["Date", "ET₀", "ETc", "Rainfall", "Moisture", "Volume", "Method", "Action"].map(h => (
                                             <th key={h} style={{ padding: "10px 12px", textAlign: "left", color: "var(--text-primary)", fontWeight: 600 }}>{h}</th>
                                         ))}
                                     </tr>
@@ -168,6 +166,9 @@ export default function IrrigationScheduler() {
                                             </td>
                                             <td style={{ padding: "10px 12px", fontWeight: 600, color: "#3b82f6" }}>
                                                 {day.volumeLiters && day.volumeLiters > 0 ? `${day.volumeLiters.toLocaleString()} L` : "-"}
+                                            </td>
+                                            <td style={{ padding: "10px 12px", fontSize: 13, color: "var(--text-muted)" }}>
+                                                {day.suggestedMethod}
                                             </td>
                                             <td style={{
                                                 padding: "10px 12px", fontWeight: 600,

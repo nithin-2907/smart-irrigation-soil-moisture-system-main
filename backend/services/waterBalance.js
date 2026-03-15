@@ -19,21 +19,22 @@ const OWM_KEY = process.env.OPENWEATHER_API_KEY;
 // ... (CROP_KC and SOIL_WHC remain same)
 // ── FAO Crop Coefficients (Kc) per growth stage ───────────────────────────────
 // Source: FAO Irrigation and Drainage Paper 56
+// p = depletion fraction (fraction of TAW that can be depleted before irrigation)
 const CROP_KC = {
-    rice: { initial: 1.05, mid: 1.20, late: 0.75, days: [30, 60, 30] },
-    wheat: { initial: 0.30, mid: 1.15, late: 0.40, days: [20, 60, 30] },
-    maize: { initial: 0.30, mid: 1.20, late: 0.60, days: [20, 40, 30] },
-    cotton: { initial: 0.45, mid: 1.15, late: 0.70, days: [30, 50, 55] },
-    sugarcane: { initial: 0.40, mid: 1.25, late: 0.75, days: [35, 105, 70] },
-    potato: { initial: 0.50, mid: 1.15, late: 0.75, days: [25, 30, 30] },
-    tomato: { initial: 0.60, mid: 1.15, late: 0.80, days: [30, 40, 45] },
-    onion: { initial: 0.50, mid: 1.00, late: 0.75, days: [15, 25, 10] },
-    banana: { initial: 0.50, mid: 1.10, late: 1.00, days: [120, 60, 180] },
-    chickpea: { initial: 0.40, mid: 1.00, late: 0.35, days: [20, 35, 15] },
-    mungbean: { initial: 0.40, mid: 1.05, late: 0.60, days: [20, 30, 20] },
-    jute: { initial: 0.40, mid: 1.15, late: 0.50, days: [25, 60, 30] },
-    coffee: { initial: 0.90, mid: 0.95, late: 0.95, days: [30, 90, 30] },
-    default: { initial: 0.40, mid: 1.10, late: 0.60, days: [25, 50, 25] },
+    rice: { initial: 1.05, mid: 1.20, late: 0.75, days: [30, 60, 30], p: 0.2 },
+    wheat: { initial: 0.30, mid: 1.15, late: 0.40, days: [20, 60, 30], p: 0.55 },
+    maize: { initial: 0.30, mid: 1.20, late: 0.60, days: [20, 40, 30], p: 0.55 },
+    cotton: { initial: 0.45, mid: 1.15, late: 0.70, days: [30, 50, 55], p: 0.65 },
+    sugarcane: { initial: 0.40, mid: 1.25, late: 0.75, days: [35, 105, 70], p: 0.65 },
+    potato: { initial: 0.50, mid: 1.15, late: 0.75, days: [25, 30, 30], p: 0.35 },
+    tomato: { initial: 0.60, mid: 1.15, late: 0.80, days: [30, 40, 45], p: 0.40 },
+    onion: { initial: 0.50, mid: 1.00, late: 0.75, days: [15, 25, 10], p: 0.30 },
+    banana: { initial: 0.50, mid: 1.10, late: 1.00, days: [120, 60, 180], p: 0.35 },
+    chickpea: { initial: 0.40, mid: 1.00, late: 0.35, days: [20, 35, 15], p: 0.45 },
+    mungbean: { initial: 0.40, mid: 1.05, late: 0.60, days: [20, 30, 20], p: 0.45 },
+    jute: { initial: 0.40, mid: 1.15, late: 0.50, days: [25, 60, 30], p: 0.30 },
+    coffee: { initial: 0.90, mid: 0.95, late: 0.95, days: [30, 90, 30], p: 0.40 },
+    default: { initial: 0.40, mid: 1.10, late: 0.60, days: [25, 50, 25], p: 0.50 },
 };
 
 // ── Soil water-holding capacities (mm/m) ──────────────────────────────────────
@@ -179,7 +180,8 @@ async function computeIrrigationSchedule({ location, crop, plantingDate, soilTyp
         // Soil cannot hold more than Field Capacity. Excess rain is runoff.
         soilMoisture = Math.min(fieldCapacity, Math.max(0, soilMoisture + dayRain - ETc));
 
-        const MAD = fieldCapacity * 0.45;  // Management Allowed Depletion (45%)
+        const p = (CROP_KC[crop.toLowerCase()] || CROP_KC.default).p;
+        const MAD = fieldCapacity * (1 - p); // Management Allowed Depletion threshold
         const deficit = Math.max(0, fieldCapacity - soilMoisture);
         
         // ACCURACY UPGRADE 3: Smarter Logic
