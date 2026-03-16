@@ -86,6 +86,7 @@ export default function Chatbot() {
     setLoading(true);
 
     try {
+      console.log("DEBUG: Sending message with language:", language);
       const response = await fetch(`${API_BASE}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -117,9 +118,24 @@ export default function Chatbot() {
 
   const clearChat = async () => {
     if (window.confirm("Are you sure you want to clear your chat history?")) {
-      setMessages([{ sender: "bot", text: "Hi 👋 I’m Smart Farm Assistant. Ask me about crops, weather, soil, or predictions!" }]);
-      setHistoryLoaded(false); // This will trigger a reload if needed, or we can just leave it empty
-      // Optional: Add a backend endpoint to delete history if desired, but for now just clear local state for bias removal
+      try {
+        // 1. Call backend to delete history
+        const res = await fetch(`${API_BASE}/api/chat/history/${encodeURIComponent(user.email)}`, {
+          method: 'DELETE'
+        });
+        
+        if (res.ok) {
+          // 2. Update local state
+          setMessages([{ sender: "bot", text: "Hi 👋 I’m Smart Farm Assistant. History cleared! Ask me anything." }]);
+          setHistoryLoaded(true); // Prevent useEffect from re-fetching
+          setInput(""); // Clear any pending input
+        } else {
+          alert("Failed to clear history on server.");
+        }
+      } catch (err) {
+        console.error("Failed to clear chat history:", err);
+        alert("Error connecting to server.");
+      }
     }
   };
 

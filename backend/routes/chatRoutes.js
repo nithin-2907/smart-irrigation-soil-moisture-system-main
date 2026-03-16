@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Chat = require('../models/Chat');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
@@ -63,6 +65,19 @@ IMPORTANT: YOU MUST REPLY TO THE USER ENTIRELY IN ${targetLanguage.toUpperCase()
 
         const messages = [systemMessage, ...conversationHistory];
 
+        // Add a final explicit reminder if the model is being stubborn
+        messages.push({
+            role: 'system',
+            content: `REMINDER: Your response must be 100% in ${targetLanguage.toUpperCase()}.`
+        });
+
+        // FS-based debug logging
+        const logData = `\n[${new Date().toISOString()}] EMAIL: ${userEmail} LANG: ${targetLanguage}\nMSG: ${message}\nPROMPT: ${JSON.stringify(messages.slice(-2))}\n`;
+        fs.appendFileSync(path.join(__dirname, '../chat_debug.log'), logData);
+
+        console.log(`DEBUG: Target Language: ${targetLanguage}`);
+        console.log(`DEBUG: Final message list length: ${messages.length}`);
+
         // 3. Call Groq API
         const response = await axios.post(
             GROQ_API_URL,
@@ -109,6 +124,17 @@ router.get('/history/:userEmail', async (req, res) => {
         res.json(history);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch history' });
+    }
+});
+
+router.delete('/history/:userEmail', async (req, res) => {
+    try {
+        const { userEmail } = req.params;
+        await Chat.deleteMany({ userEmail });
+        res.json({ message: 'History cleared successfully' });
+    } catch (error) {
+        console.error('Clear history error:', error);
+        res.status(500).json({ error: 'Failed to clear history' });
     }
 });
 
