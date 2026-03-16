@@ -54,7 +54,11 @@ router.post('/', async (req, res) => {
             role: 'system',
             content: `You are an intelligent agricultural assistant for the Smart Irrigation System. Your goal is to guide efficient use of water, help farmers with crop recommendations, weather-based advice, and soil management. Be concise and helpful.${contextText}
 
-IMPORTANT: YOU MUST REPLY TO THE USER IN ${targetLanguage.toUpperCase()}. Do not provide answers in any other language.`
+IMPORTANT: YOU MUST REPLY TO THE USER ENTIRELY IN ${targetLanguage.toUpperCase()}. 
+- IF THE SELECTED LANGUAGE IS ENGLISH, DO NOT USE HINDI.
+- IF THE SELECTED LANGUAGE IS HINDI, REPLY IN HINDI.
+- BILINGUAL RESPONSES ARE NOT ALLOWED. 
+- ALWAYS ADHERE STRICTLY TO THE SELECTED LANGUAGE: ${targetLanguage.toUpperCase()}.`
         };
 
         const messages = [systemMessage, ...conversationHistory];
@@ -63,9 +67,9 @@ IMPORTANT: YOU MUST REPLY TO THE USER IN ${targetLanguage.toUpperCase()}. Do not
         const response = await axios.post(
             GROQ_API_URL,
             {
-                model: 'llama-3.1-8b-instant', // Updated to supported model
+                model: 'llama-3.3-70b-versatile', // Using a larger, more instruction-following model
                 messages: messages,
-                temperature: 0.7,
+                temperature: 0.5, // Reduced temperature for better instruction adherence
                 max_tokens: 1024
             },
             {

@@ -115,6 +115,14 @@ export default function Chatbot() {
     }
   };
 
+  const clearChat = async () => {
+    if (window.confirm("Are you sure you want to clear your chat history?")) {
+      setMessages([{ sender: "bot", text: "Hi 👋 I’m Smart Farm Assistant. Ask me about crops, weather, soil, or predictions!" }]);
+      setHistoryLoaded(false); // This will trigger a reload if needed, or we can just leave it empty
+      // Optional: Add a backend endpoint to delete history if desired, but for now just clear local state for bias removal
+    }
+  };
+
   return (
     <>
       {/* Floating Button */}
@@ -127,15 +135,23 @@ export default function Chatbot() {
         <div className="chatbot-container">
           <div className="chatbot-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>🤖 Smart Assistant</span>
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              style={{ padding: '4px', borderRadius: '4px', border: 'none', outline: 'none', background: '#e2e8f0', color: '#1e293b', fontSize: '12px', cursor: 'pointer' }}
-            >
-              {languages.map(lang => (
-                <option key={lang} value={lang}>{lang}</option>
-              ))}
-            </select>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button 
+                onClick={clearChat}
+                style={{ padding: '4px 8px', borderRadius: '4px', border: 'none', background: '#f43f5e', color: 'white', fontSize: '10px', cursor: 'pointer' }}
+              >
+                Clear
+              </button>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                style={{ padding: '4px', borderRadius: '4px', border: 'none', outline: 'none', background: '#e2e8f0', color: '#1e293b', fontSize: '12px', cursor: 'pointer' }}
+              >
+                {languages.map(lang => (
+                  <option key={lang} value={lang}>{lang}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="chatbot-messages">
